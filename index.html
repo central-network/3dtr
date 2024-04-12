@@ -24,25 +24,27 @@
             font-size: 18px;
             white-space: nowrap;
         }
+
+        canvas {
+            outline: 1px dashed fuchsia;
+            margin: 10px auto;
+            display: block;
+        }
     </style>
 
 </head>
 <body title="146.853.146.838 ops/sec">    
-<canvas id="viewport"></canvas>
 
 <script src="3dtr.js">
 
-    //let canvas = document.getElementById("viewport");
+    const screen = new Screen();
+    const gl = screen.gl;
 
-    log( document );
-
-    /*
-    const offscreen = new OffscreenCanvas(256, 256);
-    const gl = offscreen.getContext("webgl2");
+    log( screen );
 
     let red = 0, green = 0.5 , blue= 0.3, sign = 1, factor = 0.01;
 
-    offscreen.render(function (){
+    screen.render(function (){
 
         red += (factor * sign);
         green += (factor * sign);
@@ -57,8 +59,7 @@
 
     });
   
-    log({ offscreen, gl });
-    */
+    log({ screen });
 
 </script>
 </body>

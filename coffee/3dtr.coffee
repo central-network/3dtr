@@ -30,7 +30,7 @@ do  self.init   = ->
         HEADERS_LENGTH              = 16
         HEADERS_BYTE_LENGTH         = 4 * 16
         MAX_PTR_COUNT               = 1e5
-        MAX_THREAD_COUNT            = -6 + navigator?.hardwareConcurrency or 3
+        MAX_THREAD_COUNT            = 1 # 4 + navigator?.hardwareConcurrency or 3
         ITERATION_PER_THREAD        = 1000000
     
         EVENT_READY                 = new (class EVENT_READY extends Number)(
@@ -41,10 +41,14 @@ do  self.init   = ->
             number( /DUMP_WEAKMAP/.source )
         )
 
+        INIT_SCREEN                 = new (class INIT_SCREEN extends Number)(
+            number( /INIT_SCREEN/.source )
+        )
+
         throw /MAX_HEADERS_LENGTH_EXCEED/ if HEADERS_LENGTH_OFFSET >= HEADERS_LENGTH ]
 
     [
-        blobURL,
+        blobURL, bridge,
         objbuf, ptrbuf, 
         lock, unlock,
         malloc, littleEnd,
@@ -57,7 +61,7 @@ do  self.init   = ->
         andInt16  , orInt16  , xorInt16  , subInt16  , addInt16  , loadInt16  , storeInt16  , getInt16  , setInt16  , exchangeInt16  , compareInt16  ,
         andInt8   , orInt8   , xorInt8   , subInt8   , addInt8   , loadInt8   , storeInt8   , getInt8   , setInt8   , exchangeInt8   , compareInt8   ,
 
-        OffscreenCanvas,
+        Screen,
 
         Uint8Array  , Int8Array   , Uint8ClampedArray,
         Uint16Array , Int16Array  , Uint32Array  , Int32Array,
@@ -78,6 +82,9 @@ do  self.init   = ->
         littleEnd   = new self.Uint8Array(self.Uint32Array.of(0x01).buffer)[0]
         TypedArray  = Object.getPrototypeOf self.Uint8Array
         GLContext   = WebGL2RenderingContext ? WebGLRenderingContext ]
+
+
+
 
     resolvFind  = ( id, retry = 0 ) ->
         i = HINDEX_RESOLV_ID + Atomics.load p32, 1
@@ -1960,36 +1967,19 @@ do  self.init   = ->
                 # WeakMap -> {TypedArray} => ptri
                 resolvs.set this, ptri
 
-        class OffscreenCanvas   extends self.OffscreenCanvas
-
-            this.Proxy  = ( ptri ) ->
-
-                get     : ( ctx, key, pxy ) -> switch key
-
-                    when "clearColor", "clear"
-                        -> lock ptri
-
-                    else Reflect.get arguments...
-
-            getContext  : ->
-                ptri = resolvCall()
-                
-                if  isThread
-                    context = new Proxy GLContext::,
-                        OffscreenCanvas.Proxy( ptri )
-
-                else
-                    context = super arguments...
-                    unlock ptri
-
-                resolvs.set context, ptri
-                return context
+        class Screen            extends Uint32Array
 
             render      : ( handler ) ->
                 if  isBridge then do commit = =>
                     
-                    handler.call this
-                    postMessage render : @transferToImageBitmap()
+                    ptri = resolvs.get this
+                    canvas = @gl.canvas
+                    handler.call @gl, ptri
+                    capture = canvas.transferToImageBitmap.bind canvas
+
+                    postMessage render : {
+                        ptri, imageBitmap : capture()
+                    }
                     requestAnimationFrame commit
 
                 return this
@@ -1997,17 +1987,24 @@ do  self.init   = ->
             constructor : ->
                 ptri = resolvCall()
 
+                super 4 * 16
+
                 if  isThread
-                    canvas = new Proxy OffscreenCanvas::,
-                        OffscreenCanvas.Proxy( ptri )
+                    lock ptri
 
                 else
-                    canvas = super arguments...
-                    unlock ptri
+                    width = 256
+                    height = 256
 
-                resolvs.set canvas, ptri
-                return canvas
-                                
+                    canvas = new OffscreenCanvas( width, height )
+                    @gl = canvas.getContext "webgl2"
+
+                    postMessage screen : { width, height, ptri }
+                    lock ptri
+
+                resolvs.set this, ptri                
+
+
     if  isWindow
 
 
@@ -2021,10 +2018,28 @@ do  self.init   = ->
                 
         bridgeHandler   =
 
-            render      : ( imageBitmap ) ->
-                return ;
-                bitmaprenderer.transferFromImageBitmap imageBitmap
-                imageBitmap.close()
+            render      : ( data ) ->
+                this[ data.ptri ]
+                    .transferFromImageBitmap data.imageBitmap
+
+            screen      : ( data ) ->
+                { width, height, ptri } = data
+
+                canvas = document.createElement "canvas"
+                context = canvas.getContext "bitmaprenderer"
+
+                canvas.width = width * devicePixelRatio
+                canvas.height = height * devicePixelRatio
+
+                canvas.style.width = CSS.px width
+                canvas.style.height = CSS.px height
+
+                document.body.appendChild canvas
+
+                resolvs.set this, ptri
+                @[ ptri ] = context
+                unlock ptri
+        
         
         threadHandler   =
             hello       : ->
@@ -2106,6 +2121,7 @@ do  self.init   = ->
                 console.log objbuf
                 console.log ptrbuf
                 console.log p32
+                console.log resolvs
                 bc.postMessage DUMP_WEAKMAP
 
         queueMicrotask  ->
@@ -2119,38 +2135,23 @@ do  self.init   = ->
 
 
 
-
-
-
     if  isWorker
 
         class HTMLElement
 
-            constructor : ->
-                2
-
-        document = new class document extends ( class HTMLDocument )
-
-            getElementById : ( id ) ->
-                ptri = resolvCall()
-
-                if  isThread
-                    lock ptri
-                    element = new HTMLElement()
-
-                else
-                    element = new HTMLElement()
-                    unlock ptri
-
-                resolvs.set element, ptri
-                return element
-
+        class HTMLDocument
         
+
     if  isBridge
 
         addEventListener "message", (e) ->
 
             for req, data of e.data then switch req
+
+                when "offscreen"
+
+                    log { data }
+
                 when "setup"
                     uuid = randomUUID()
                     blobURL = data.blobURL
@@ -2166,33 +2167,7 @@ do  self.init   = ->
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     if  isThread
-
-
 
         addEventListener "message", (e) ->
 

@@ -1,7 +1,7 @@
 self.name = "window";
 
 (self.init = function() {
-  var ALLOCATION_BYTEOFFSET, BUFFER_TEST_START_LENGTH, BUFFER_TEST_STEP_DIVIDER, BYTES_PER_ELEMENT, BigInt64Array, BigUint64Array, DUMP_WEAKMAP, EVENT_READY, Float32Array, Float64Array, GLContext, HEADERS_BYTE_LENGTH, HEADERS_LENGTH, HEADERS_LENGTH_OFFSET, HINDEX_BEGIN, HINDEX_BYTELENGTH, HINDEX_BYTEOFFSET, HINDEX_END, HINDEX_ITERINDEX, HINDEX_ITERLENGTH, HINDEX_LENGTH, HINDEX_LOCKFREE, HINDEX_RESOLV_ID, HINDEX_WAITCOUNT, HTMLDocument, HTMLElement, INITIAL_BYTELENGTH, ITERATION_PER_THREAD, Int16Array, Int32Array, Int8Array, MAX_PTR_COUNT, MAX_THREAD_COUNT, OffscreenCanvas, RESERVED_BYTELENGTH, TypedArray, Uint16Array, Uint32Array, Uint8Array, Uint8ClampedArray, addInt16, addInt32, addInt8, addUint16, addUint32, addUint8, andInt16, andInt32, andInt8, andUint16, andUint32, andUint8, bc, blobURL, bridgeHandler, bridgemessage, compareInt16, compareInt32, compareInt8, compareUint16, compareUint32, compareUint8, createBlobURL, createBuffers, createThreads, createWorker, cu8, document, dvw, error, exchangeInt16, exchangeInt32, exchangeInt8, exchangeUint16, exchangeUint32, exchangeUint8, f32, f64, getInt16, getInt32, getInt8, getUint16, getUint32, getUint8, i16, i32, i64, initMemory, isBridge, isThread, isWindow, isWorker, listenEvents, littleEnd, loadInt16, loadInt32, loadInt8, loadUint16, loadUint32, loadUint8, lock, log, malloc, now, number, objbuf, orInt16, orInt32, orInt8, orUint16, orUint32, orUint8, p32, pnow, ptrbuf, randomUUID, regenerate, resolvCall, resolvFind, resolvs, selfName, setInt16, setInt32, setInt8, setUint16, setUint32, setUint8, sharedHandler, si8, storeInt16, storeInt32, storeInt8, storeUint16, storeUint32, storeUint8, subInt16, subInt32, subInt8, subUint16, subUint32, subUint8, threadHandler, threadId, threadmessage, u16, u32, u64, ui8, unlock, warn, workers, xorInt16, xorInt32, xorInt8, xorUint16, xorUint32, xorUint8;
+  var ALLOCATION_BYTEOFFSET, BUFFER_TEST_START_LENGTH, BUFFER_TEST_STEP_DIVIDER, BYTES_PER_ELEMENT, BigInt64Array, BigUint64Array, DUMP_WEAKMAP, EVENT_READY, Float32Array, Float64Array, GLContext, HEADERS_BYTE_LENGTH, HEADERS_LENGTH, HEADERS_LENGTH_OFFSET, HINDEX_BEGIN, HINDEX_BYTELENGTH, HINDEX_BYTEOFFSET, HINDEX_END, HINDEX_ITERINDEX, HINDEX_ITERLENGTH, HINDEX_LENGTH, HINDEX_LOCKFREE, HINDEX_RESOLV_ID, HINDEX_WAITCOUNT, HTMLDocument, HTMLElement, INITIAL_BYTELENGTH, INIT_SCREEN, ITERATION_PER_THREAD, Int16Array, Int32Array, Int8Array, MAX_PTR_COUNT, MAX_THREAD_COUNT, RESERVED_BYTELENGTH, Screen, TypedArray, Uint16Array, Uint32Array, Uint8Array, Uint8ClampedArray, addInt16, addInt32, addInt8, addUint16, addUint32, addUint8, andInt16, andInt32, andInt8, andUint16, andUint32, andUint8, bc, blobURL, bridge, bridgeHandler, bridgemessage, compareInt16, compareInt32, compareInt8, compareUint16, compareUint32, compareUint8, createBlobURL, createBuffers, createThreads, createWorker, cu8, dvw, error, exchangeInt16, exchangeInt32, exchangeInt8, exchangeUint16, exchangeUint32, exchangeUint8, f32, f64, getInt16, getInt32, getInt8, getUint16, getUint32, getUint8, i16, i32, i64, initMemory, isBridge, isThread, isWindow, isWorker, listenEvents, littleEnd, loadInt16, loadInt32, loadInt8, loadUint16, loadUint32, loadUint8, lock, log, malloc, now, number, objbuf, orInt16, orInt32, orInt8, orUint16, orUint32, orUint8, p32, pnow, ptrbuf, randomUUID, regenerate, resolvCall, resolvFind, resolvs, selfName, setInt16, setInt32, setInt8, setUint16, setUint32, setUint8, sharedHandler, si8, storeInt16, storeInt32, storeInt8, storeUint16, storeUint32, storeUint8, subInt16, subInt32, subInt8, subUint16, subUint32, subUint8, threadHandler, threadId, threadmessage, u16, u32, u64, ui8, unlock, warn, workers, xorInt16, xorInt32, xorInt8, xorUint16, xorUint32, xorUint8;
   log = function() {
     return console.log(name, ...arguments);
   };
@@ -38,17 +38,18 @@ self.name = "window";
     HEADERS_LENGTH = 16,
     HEADERS_BYTE_LENGTH = 4 * 16,
     MAX_PTR_COUNT = 1e5,
-    MAX_THREAD_COUNT = -6 + (typeof navigator !== "undefined" && navigator !== null ? navigator.hardwareConcurrency : void 0) || 3,
+    MAX_THREAD_COUNT = 1, // 4 + navigator?.hardwareConcurrency or 3
     ITERATION_PER_THREAD = 1000000,
     EVENT_READY = new (EVENT_READY = class EVENT_READY extends Number {})(number(/EVENT_READY/.source)),
     DUMP_WEAKMAP = new (DUMP_WEAKMAP = class DUMP_WEAKMAP extends Number {})(number(/DUMP_WEAKMAP/.source)),
+    INIT_SCREEN = new (INIT_SCREEN = class INIT_SCREEN extends Number {})(number(/INIT_SCREEN/.source)),
     (function() {
       if (HEADERS_LENGTH_OFFSET >= HEADERS_LENGTH) {
         throw /MAX_HEADERS_LENGTH_EXCEED/;
       }
     })()
   ];
-  [blobURL, objbuf, ptrbuf, lock, unlock, malloc, littleEnd, p32, dvw, si8, ui8, cu8, i32, u32, f32, f64, u64, i64, i16, u16, andUint32, orUint32, xorUint32, subUint32, addUint32, loadUint32, storeUint32, getUint32, setUint32, exchangeUint32, compareUint32, andUint16, orUint16, xorUint16, subUint16, addUint16, loadUint16, storeUint16, getUint16, setUint16, exchangeUint16, compareUint16, andUint8, orUint8, xorUint8, subUint8, addUint8, loadUint8, storeUint8, getUint8, setUint8, exchangeUint8, compareUint8, andInt32, orInt32, xorInt32, subInt32, addInt32, loadInt32, storeInt32, getInt32, setInt32, exchangeInt32, compareInt32, andInt16, orInt16, xorInt16, subInt16, addInt16, loadInt16, storeInt16, getInt16, setInt16, exchangeInt16, compareInt16, andInt8, orInt8, xorInt8, subInt8, addInt8, loadInt8, storeInt8, getInt8, setInt8, exchangeInt8, compareInt8, OffscreenCanvas, Uint8Array, Int8Array, Uint8ClampedArray, Uint16Array, Int16Array, Uint32Array, Int32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array] = [];
+  [blobURL, bridge, objbuf, ptrbuf, lock, unlock, malloc, littleEnd, p32, dvw, si8, ui8, cu8, i32, u32, f32, f64, u64, i64, i16, u16, andUint32, orUint32, xorUint32, subUint32, addUint32, loadUint32, storeUint32, getUint32, setUint32, exchangeUint32, compareUint32, andUint16, orUint16, xorUint16, subUint16, addUint16, loadUint16, storeUint16, getUint16, setUint16, exchangeUint16, compareUint16, andUint8, orUint8, xorUint8, subUint8, addUint8, loadUint8, storeUint8, getUint8, setUint8, exchangeUint8, compareUint8, andInt32, orInt32, xorInt32, subInt32, addInt32, loadInt32, storeInt32, getInt32, setInt32, exchangeInt32, compareInt32, andInt16, orInt16, xorInt16, subInt16, addInt16, loadInt16, storeInt16, getInt16, setInt16, exchangeInt16, compareInt16, andInt8, orInt8, xorInt8, subInt8, addInt8, loadInt8, storeInt8, getInt8, setInt8, exchangeInt8, compareInt8, Screen, Uint8Array, Int8Array, Uint8ClampedArray, Uint16Array, Int16Array, Uint32Array, Int32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array] = [];
   [bc = new BroadcastChannel("3dtr"), selfName = self.name, isWindow = self.document != null, isWorker = typeof WorkerGlobalScope !== "undefined" && WorkerGlobalScope !== null, isBridge = /bridge/i.test(selfName), isThread = /thread/i.test(selfName), threadId = isThread && parseInt(selfName.match(/\d+/)), now = Date.now(), pnow = performance.now(), resolvs = new WeakMap(), workers = new self.Array(), littleEnd = new self.Uint8Array(self.Uint32Array.of(0x01).buffer)[0], TypedArray = Object.getPrototypeOf(self.Uint8Array), GLContext = typeof WebGL2RenderingContext !== "undefined" && WebGL2RenderingContext !== null ? WebGL2RenderingContext : WebGLRenderingContext];
   resolvFind = function(id, retry = 0) {
     var i, ptri;
@@ -1584,43 +1585,21 @@ self.name = "window";
       }
 
     };
-    return OffscreenCanvas = class OffscreenCanvas extends self.OffscreenCanvas {
-      static Proxy(ptri) {
-        return {
-          get: function(ctx, key, pxy) {
-            switch (key) {
-              case "clearColor":
-              case "clear":
-                return function() {
-                  return lock(ptri);
-                };
-              default:
-                return Reflect.get(...arguments);
-            }
-          }
-        };
-      }
-
-      getContext() {
-        var context, ptri;
-        ptri = resolvCall();
-        if (isThread) {
-          context = new Proxy(GLContext.prototype, OffscreenCanvas.Proxy(ptri));
-        } else {
-          context = super.getContext(...arguments);
-          unlock(ptri);
-        }
-        resolvs.set(context, ptri);
-        return context;
-      }
-
+    return Screen = class Screen extends Uint32Array {
       render(handler) {
         var commit;
         if (isBridge) {
           (commit = () => {
-            handler.call(this);
+            var canvas, capture, ptri;
+            ptri = resolvs.get(this);
+            canvas = this.gl.canvas;
+            handler.call(this.gl, ptri);
+            capture = canvas.transferToImageBitmap.bind(canvas);
             postMessage({
-              render: this.transferToImageBitmap()
+              render: {
+                ptri,
+                imageBitmap: capture()
+              }
             });
             return requestAnimationFrame(commit);
           })();
@@ -1629,16 +1608,22 @@ self.name = "window";
       }
 
       constructor() {
-        var canvas, ptri;
+        var canvas, height, ptri, width;
         ptri = resolvCall();
+        super(4 * 16);
         if (isThread) {
-          canvas = new Proxy(OffscreenCanvas.prototype, OffscreenCanvas.Proxy(ptri));
+          lock(ptri);
         } else {
-          canvas = super(...arguments);
-          unlock(ptri);
+          width = 256;
+          height = 256;
+          canvas = new OffscreenCanvas(width, height);
+          this.gl = canvas.getContext("webgl2");
+          postMessage({
+            screen: {width, height, ptri}
+          });
+          lock(ptri);
         }
-        resolvs.set(canvas, ptri);
-        return canvas;
+        resolvs.set(this, ptri);
       }
 
     };
@@ -1658,10 +1643,22 @@ self.name = "window";
       }
     };
     bridgeHandler = {
-      render: function(imageBitmap) {
-        return;
-        bitmaprenderer.transferFromImageBitmap(imageBitmap);
-        return imageBitmap.close();
+      render: function(data) {
+        return this[data.ptri].transferFromImageBitmap(data.imageBitmap);
+      },
+      screen: function(data) {
+        var canvas, context, height, ptri, width;
+        ({width, height, ptri} = data);
+        canvas = document.createElement("canvas");
+        context = canvas.getContext("bitmaprenderer");
+        canvas.width = width * devicePixelRatio;
+        canvas.height = height * devicePixelRatio;
+        canvas.style.width = CSS.px(width);
+        canvas.style.height = CSS.px(height);
+        document.body.appendChild(canvas);
+        resolvs.set(this, ptri);
+        this[ptri] = context;
+        return unlock(ptri);
       }
     };
     threadHandler = {
@@ -1717,7 +1714,7 @@ self.name = "window";
       return workers[workers.length] = worker;
     };
     createThreads = function() {
-      var bridge, i, j, ref, results, thread;
+      var i, j, ref, results, thread;
       bridge = createWorker("bridge", bridgemessage);
       bridge.postMessage({
         setup: {blobURL, objbuf, ptrbuf}
@@ -1751,6 +1748,7 @@ self.name = "window";
         console.log(objbuf);
         console.log(ptrbuf);
         console.log(p32);
+        console.log(resolvs);
         return bc.postMessage(DUMP_WEAKMAP);
       };
     };
@@ -1762,28 +1760,8 @@ self.name = "window";
     });
   }
   if (isWorker) {
-    HTMLElement = class HTMLElement {
-      constructor() {
-        2;
-      }
-
-    };
-    document = new (document = class document extends (HTMLDocument = class HTMLDocument {}) {
-      getElementById(id) {
-        var element, ptri;
-        ptri = resolvCall();
-        if (isThread) {
-          lock(ptri);
-          element = new HTMLElement();
-        } else {
-          element = new HTMLElement();
-          unlock(ptri);
-        }
-        resolvs.set(element, ptri);
-        return element;
-      }
-
-    });
+    HTMLElement = class HTMLElement {};
+    HTMLDocument = class HTMLDocument {};
   }
   if (isBridge) {
     addEventListener("message", function(e) {
@@ -1793,6 +1771,9 @@ self.name = "window";
       for (req in ref) {
         data = ref[req];
         switch (req) {
+          case "offscreen":
+            results.push(log({data}));
+            break;
           case "setup":
             uuid = randomUUID();
             blobURL = data.blobURL;
