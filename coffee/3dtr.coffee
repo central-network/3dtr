@@ -66,7 +66,8 @@ do  self.init   = ->
     [
         bc          = new BroadcastChannel "3dtr"
         selfName    = self.name
-        isWindow    = document?
+        isWindow    = self.document?
+        isWorker    = WorkerGlobalScope?
         isBridge    = /bridge/i.test selfName  
         isThread    = /thread/i.test selfName
         threadId    = isThread and parseInt selfName.match /\d+/
@@ -2006,7 +2007,6 @@ do  self.init   = ->
 
                 resolvs.set canvas, ptri
                 return canvas
-
                                 
     if  isWindow
 
@@ -2087,8 +2087,8 @@ do  self.init   = ->
                 thread . postMessage setup : { blobURL, objbuf, ptrbuf }
 
         createBlobURL   = ->
-            __user = "\nconst onready = function ( document ) {\n\t" +
-                "#{[ ...document.scripts ].find( (d) => d.text and d.src ).text.trim()}\n" + 
+            __user = "\nconst onready = function () {\n\t" +
+                "#{[ ...self.document.scripts ].find( (d) => d.text and d.src ).text.trim()}\n" + 
             "};\n"
 
             __0ptr = "(" + "#{self.init}".split("return " + "0xdead;")[0]
@@ -2108,7 +2108,6 @@ do  self.init   = ->
                 console.log p32
                 bc.postMessage DUMP_WEAKMAP
 
-
         queueMicrotask  ->
             listenEvents()
             createBuffers()
@@ -2123,12 +2122,30 @@ do  self.init   = ->
 
 
 
+    if  isWorker
 
+        class HTMLElement
 
+            constructor : ->
+                2
 
+        document = new class document extends ( class HTMLDocument )
 
+            getElementById : ( id ) ->
+                ptri = resolvCall()
 
+                if  isThread
+                    lock ptri
+                    element = new HTMLElement()
 
+                else
+                    element = new HTMLElement()
+                    unlock ptri
+
+                resolvs.set element, ptri
+                return element
+
+        
     if  isBridge
 
         addEventListener "message", (e) ->
@@ -2174,6 +2191,8 @@ do  self.init   = ->
 
 
     if  isThread
+
+
 
         addEventListener "message", (e) ->
 
