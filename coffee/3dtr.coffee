@@ -2130,59 +2130,6 @@ do  self.init   = ->
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     if  isBridge
 
         addEventListener "message", (e) ->
@@ -2227,43 +2174,10 @@ do  self.init   = ->
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     if  isThread
 
         addEventListener "message", (e) ->
+            
             for req, data of e.data then switch req
                 when "setup"
                     uuid = randomUUID()
