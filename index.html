@@ -6,12 +6,14 @@
     <link rel="icon" href="./blueicon.ico">
     <script src="./coi-serviceworker.js"></script>
     <style>
+        /*
         body, html { 
             width: 100vw; height: 100vh; overflow: hidden;
             margin: 0; overscroll-behavior-x: none;
             background-color: #08203f;
             pointer-events: none;
         }
+        */
 
         body::after {
             content: attr(title);
@@ -19,16 +21,10 @@
             position: fixed;
             left: 0;
             bottom: 0;
-            color: rgb(169, 229, 19);
+            color: rgb(0, 0, 0);
             font-family: Georgia, 'Times New Roman', Times, serif;
             font-size: 18px;
             white-space: nowrap;
-        }
-
-        canvas {
-            outline: 1px dashed fuchsia;
-            margin: 10px auto;
-            display: block;
         }
     </style>
 
@@ -37,14 +33,11 @@
 
 <script src="3dtr.js">
 
-    const screen = new Screen();
-    const gl = screen.gl;
-
-    log( screen );
-
+    new Uint8Array( Math.trunc(performance.now()) );
+    const screen = new OnscreenCanvas();
     let red = 0, green = 0.5 , blue= 0.3, sign = 1, factor = 0.01;
 
-    screen.render(function (){
+    screen.render(function (gl){
 
         red += (factor * sign);
         green += (factor * sign);
@@ -57,7 +50,9 @@
         gl.clearColor( red, green, blue, 1 );
         gl.clear(gl.COLOR_BUFFER_BIT);
 
+        
     });
+    
   
     log({ screen });
 

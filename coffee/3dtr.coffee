@@ -32,6 +32,11 @@ do  self.init   = ->
         MAX_PTR_COUNT               = 1e5
         MAX_THREAD_COUNT            = 1 # 4 + navigator?.hardwareConcurrency or 3
         ITERATION_PER_THREAD        = 1000000
+
+        INNER_WIDTH                 = innerWidth ? 640
+        INNER_HEIGHT                = innerHeight ? 480
+        RATIO_PIXEL                 = devicePixelRatio ? 1
+        RATIO_ASPECT                = INNER_WIDTH / INNER_HEIGHT 
     
         EVENT_READY                 = new (class EVENT_READY extends Number)(
             number( /EVENT_READY/.source )
@@ -52,6 +57,7 @@ do  self.init   = ->
         objbuf, ptrbuf, 
         lock, unlock,
         malloc, littleEnd,
+        request, objects,
         p32, dvw, si8, ui8, cu8, i32, u32, f32, f64, u64, i64, i16, u16,
 
         andUint32 , orUint32 , xorUint32 , subUint32 , addUint32 , loadUint32 , storeUint32 , getUint32 , setUint32 , exchangeUint32 , compareUint32 ,
@@ -59,9 +65,11 @@ do  self.init   = ->
         andUint8  , orUint8  , xorUint8  , subUint8  , addUint8  , loadUint8  , storeUint8  , getUint8  , setUint8  , exchangeUint8  , compareUint8  ,
         andInt32  , orInt32  , xorInt32  , subInt32  , addInt32  , loadInt32  , storeInt32  , getInt32  , setInt32  , exchangeInt32  , compareInt32  ,
         andInt16  , orInt16  , xorInt16  , subInt16  , addInt16  , loadInt16  , storeInt16  , getInt16  , setInt16  , exchangeInt16  , compareInt16  ,
-        andInt8   , orInt8   , xorInt8   , subInt8   , addInt8   , loadInt8   , storeInt8   , getInt8   , setInt8   , exchangeInt8   , compareInt8   ,
+        andInt8   , orInt8   , xorInt8   , subInt8   , addInt8   , loadInt8   , storeInt8   , getInt8   , setInt8   , exchangeInt8   , compareInt8 ] = []
 
-        Screen,
+    [
+        OnscreenCanvas,
+        OffscreenCanvas,
 
         Uint8Array  , Int8Array   , Uint8ClampedArray,
         Uint16Array , Int16Array  , Uint32Array  , Int32Array,
@@ -78,6 +86,8 @@ do  self.init   = ->
         now         = Date.now()
         pnow        = performance.now()
         resolvs     = new WeakMap()
+        replies     = new Object()
+        objects    = new Object()
         workers     = new self.Array()
         littleEnd   = new self.Uint8Array(self.Uint32Array.of(0x01).buffer)[0]
         TypedArray  = Object.getPrototypeOf self.Uint8Array
@@ -179,6 +189,7 @@ do  self.init   = ->
         p32 = new self.Int32Array ptrbuf
 
         lock                = ( ptri ) ->
+            log lock : { ptri, i: if isThread then 4 else 3 }
             if  ptri
                 Atomics.wait p32, ptri + HINDEX_LOCKFREE
 
@@ -189,7 +200,11 @@ do  self.init   = ->
             if  ptri
                 Atomics.store  p32, ptri + HINDEX_LOCKFREE, 1
                 Atomics.notify p32, ptri + HINDEX_LOCKFREE
-            Atomics.notify p32 , if isThread then 4 else 3
+
+            else
+                if isBridge
+                    Atomics.notify p32 , 4
+                else Atomics.notify p32 , 3
 
 
         malloc              = ( byteLength = 0, alignBytes = 1 ) ->
@@ -313,6 +328,12 @@ do  self.init   = ->
                     array
 
         Object.defineProperties TypedArray::,
+
+            indexUint8          :
+                    value       : -> arguments[0] + ( p32[ resolvs.get this ] + HINDEX_BYTEOFFSET ) / 1
+
+            indexUint32         :
+                    value       : -> arguments[0] + ( p32[ resolvs.get this ] + HINDEX_BYTEOFFSET ) / 4
             
             subarray            :
                 #part of this
@@ -1967,7 +1988,111 @@ do  self.init   = ->
                 # WeakMap -> {TypedArray} => ptri
                 resolvs.set this, ptri
 
-        class Screen            extends Uint32Array
+        class OnscreenCanvas    extends Uint32Array
+    
+            @byteLength         : 4 * 2
+
+            INDEX_HASCONTEXT    : 0 * 1     # Uint8
+
+            INDEX_ISRENDERING   : 1 * 1     # Uint8
+            
+            INDEX_FRAMECOUNT    : 1 * 4     # Uint32
+
+            Object.defineProperties OnscreenCanvas::,
+
+                isRendering     :
+                        get     : -> loadUint8  @indexUint8(@INDEX_ISRENDERING)
+                        set     : -> storeUint8 @indexUint8(@INDEX_ISRENDERING), arguments[0]
+
+                hasContext      :
+                        get     : -> loadUint8  @indexUint8(@INDEX_HASCONTEXT)
+                        set     : ->
+                            if  storeUint8 @indexUint8(@INDEX_HASCONTEXT), arguments[0]
+                                @render() if @isRendering 
+
+                frameCount      :
+                        get     : -> loadUint32 @indexUint32(@INDEX_FRAMECOUNT)
+                        set     : -> storeUint32 @indexUint32(@INDEX_FRAMECOUNT), arguments[0]
+
+            addFrame    : ->
+                addUint32 @indexUint32(@INDEX_FRAMECOUNT), 1
+
+            render      : ( handler ) ->
+                return (->) if isThread
+
+                unless @isRendering
+                    @isRendering = 1
+
+                @handler = handler if handler
+                return unless @hasContext
+
+                [ gl, handler, ptri ] =
+                    [ @gl, @handler, resolvs.get this ]
+
+                log { gl, ptri, handler }
+
+                if  isBridge then do commit = =>
+                    
+                    if  @hasContext
+                        handler.call this, gl, frame = @addFrame()
+
+                    requestAnimationFrame commit
+
+
+            constructor : ->
+                super OnscreenCanvas.byteLength
+                    .init()
+
+            init        : ->
+                ptri = resolvCall()
+
+                if  isThread
+                    lock ptri # for bridge
+                    
+                else
+                    replies[ ptri ] = ( canvas ) =>
+                        @gl = canvas.getContext "webgl2", {
+                            powerPreference: "high-performance",
+                            ### preserveDrawingBuffer: false,
+                                I know this has been answered elsewhere but I can't find it so ....
+
+                                preserveDrawingBuffer: false
+                                means WebGL can swap buffers instead of copy buffers.
+
+                                WebGL canvases have 2 buffers. The one you're drawing to and the one 
+                                being displayed. When it comes time to draw the webpage WebGL has 2 options
+
+                                Copy the drawing buffer to the display buffer.
+
+                                This operation is slower obviously as copying thousands or millions pixels 
+                                is not a free operation
+
+                                Swap the two buffers.
+
+                                This operation is effectively instant as nothing really needs to happen 
+                                except to swap the contents of 2 variables.
+
+                                Whether WebGL swaps or copies is up to the browser and various other 
+                                settings but if preserveDrawingBuffer is false WebGL can swap, if it's true it can't.
+
+                                If you'd like to see a perf difference I'd suggested trying your app 
+                                on mobile phone. Make sure antialiasing is off too since antialiasing 
+                                requires a resolve step which is effectively copy operation.
+
+                                edited Jan 2, 2015 at 21:56
+                                answered Jan 2, 2015 at 18:47
+                                gman ###
+                            
+                        }
+                        @hasContext = 1
+                        unlock ptri
+                        
+                    postMessage onscreen : { ptri }
+
+                resolvs.set this , ptri ; this
+                
+
+        class OffscreenCanvas   extends self.OffscreenCanvas
 
             render      : ( handler ) ->
                 if  isBridge then do commit = =>
@@ -1982,24 +2107,23 @@ do  self.init   = ->
                     }
                     requestAnimationFrame commit
 
-                return this
+                return ->
 
             constructor : ->
                 ptri = resolvCall()
 
-                super 4 * 16
-
                 if  isThread
                     lock ptri
+                    return new Proxy OffscreenCanvas::, {}
 
                 else
                     width = 256
                     height = 256
 
-                    canvas = new OffscreenCanvas( width, height )
+                    canvas = super width, height
                     @gl = canvas.getContext "webgl2"
 
-                    postMessage screen : { width, height, ptri }
+                    postMessage offscreen : { width, height, ptri }
                     lock ptri
 
                 resolvs.set this, ptri                
@@ -2007,8 +2131,25 @@ do  self.init   = ->
 
     if  isWindow
 
+        createCanvas    = ( data ) ->
+            {   width = INNER_WIDTH,
+                height = INNER_HEIGHT } = data
+
+            canvas                  = document.createElement "canvas"
+            canvas.width            = RATIO_PIXEL * width
+            canvas.height           = RATIO_PIXEL * height
+            canvas.style.width      = CSS.px width
+            canvas.style.height     = CSS.px height
+            canvas.style.inset      = CSS.px 0
+            canvas.style.position   = "fixed"
+
+            document.body.appendChild canvas
 
         sharedHandler   =
+
+            hello       : ->
+                log "hello", arguments...
+
             register    : ( data ) ->
                 warn "registering worker:", data
                 Object.assign @info, data ; this
@@ -2022,24 +2163,21 @@ do  self.init   = ->
                 this[ data.ptri ]
                     .transferFromImageBitmap data.imageBitmap
 
-            screen      : ( data ) ->
-                { width, height, ptri } = data
+            onscreen    : ( data ) ->
+                ptri = data.ptri
+                canvas = createCanvas( data )
+                    .transferControlToOffscreen()
 
-                canvas = document.createElement "canvas"
+                @postMessage onscreen : { canvas, ptri }, [ canvas ]
+
+            offscreen   : ( data ) ->
+                ptri = data.ptri
+                canvas = createCanvas data
                 context = canvas.getContext "bitmaprenderer"
-
-                canvas.width = width * devicePixelRatio
-                canvas.height = height * devicePixelRatio
-
-                canvas.style.width = CSS.px width
-                canvas.style.height = CSS.px height
-
-                document.body.appendChild canvas
 
                 resolvs.set this, ptri
                 @[ ptri ] = context
                 unlock ptri
-        
         
         threadHandler   =
             hello       : ->
@@ -2123,12 +2261,15 @@ do  self.init   = ->
                 console.log resolvs
                 bc.postMessage DUMP_WEAKMAP
 
+            document.body.style.overscrollBehavior = "none"
+            document.body.style.height = CSS.vh 100
+            document.body.style.margin = 0
+
         queueMicrotask  ->
             listenEvents()
             createBuffers()
             createBlobURL()
             createThreads()
-
 
 
 
@@ -2146,6 +2287,10 @@ do  self.init   = ->
         addEventListener "message", (e) ->
 
             for req, data of e.data then switch req
+
+                when "onscreen"
+                    ptri = data.ptri
+                    replies[ ptri ] data.canvas
 
                 when "offscreen"
 
@@ -2193,6 +2338,7 @@ do  self.init   = ->
     bc.onmessage = ( e ) -> {
         [ EVENT_READY ] : -> onready()
         [ DUMP_WEAKMAP ] : -> log resolvs
+        [ INIT_SCREEN ] : -> log arguments
     }[ e.data ]()
 
             
