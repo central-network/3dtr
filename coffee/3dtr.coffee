@@ -2052,7 +2052,7 @@ do  self.init   = ->
                         /NO_HANDLER_FOR_BRIDGE/, request, data
                     ]
 
-                handler.call this, data
+                return handler.call this, data
 
         threadmessage   = ({ data }) ->
             for request, data of data
@@ -2061,8 +2061,7 @@ do  self.init   = ->
                     sharedHandler[ request ] or throw [
                         /NO_HANDLER_FOR_THREAD/, request, data
                     ]
-
-                handler.call this, data
+                return handler.call this, data
 
         createBuffers   = ->
 

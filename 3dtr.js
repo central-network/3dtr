@@ -1665,28 +1665,24 @@ self.name = "window";
       hello: function() {}
     };
     bridgemessage = function({data}) {
-      var handler, request, results;
-      results = [];
+      var handler, request;
       for (request in data) {
         data = data[request];
         handler = bridgeHandler[request] || sharedHandler[request] || (function() {
           throw [/NO_HANDLER_FOR_BRIDGE/, request, data];
         })();
-        results.push(handler.call(this, data));
+        return handler.call(this, data);
       }
-      return results;
     };
     threadmessage = function({data}) {
-      var handler, request, results;
-      results = [];
+      var handler, request;
       for (request in data) {
         data = data[request];
         handler = threadHandler[request] || sharedHandler[request] || (function() {
           throw [/NO_HANDLER_FOR_THREAD/, request, data];
         })();
-        results.push(handler.call(this, data));
+        return handler.call(this, data);
       }
-      return results;
     };
     createBuffers = function() {
       var Buffer, buffer, maxByteLength;
