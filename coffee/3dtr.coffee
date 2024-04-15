@@ -189,7 +189,6 @@ do  self.init   = ->
         p32 = new self.Int32Array ptrbuf
 
         lock                = ( ptri ) ->
-            log lock : { ptri, i: if isThread then 4 else 3 }
             if  ptri
                 Atomics.wait p32, ptri + HINDEX_LOCKFREE
 
@@ -205,7 +204,6 @@ do  self.init   = ->
                 if isBridge
                     Atomics.notify p32 , 4
                 else Atomics.notify p32 , 3
-
 
         malloc              = ( byteLength = 0, alignBytes = 1 ) ->
             if  byteLength > 0
@@ -2028,8 +2026,6 @@ do  self.init   = ->
 
                 [ gl, handler, ptri ] =
                     [ @gl, @handler, resolvs.get this ]
-
-                log { gl, ptri, handler }
 
                 if  isBridge then do commit = =>
                     

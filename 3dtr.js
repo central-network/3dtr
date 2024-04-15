@@ -138,12 +138,6 @@ self.name = "window";
     dvw = new self.DataView(objbuf);
     p32 = new self.Int32Array(ptrbuf);
     lock = function(ptri) {
-      log({
-        lock: {
-          ptri,
-          i: isThread ? 4 : 3
-        }
-      });
       if (ptri) {
         return Atomics.wait(p32, ptri + HINDEX_LOCKFREE);
       } else {
@@ -1632,7 +1626,6 @@ self.name = "window";
             return;
           }
           [gl, handler, ptri] = [this.gl, this.handler, resolvs.get(this)];
-          log({gl, ptri, handler});
           if (isBridge) {
             return (commit = () => {
               var frame;

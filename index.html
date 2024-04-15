@@ -26,16 +26,378 @@
             font-size: 18px;
             white-space: nowrap;
         }
+
+        #textview, #textdraw, #linedraw {
+            width: 256px;
+            height: 256px;
+            position: absolute;
+            z-index: 1;
+            left: 50%;
+            margin-left: -128px;
+            background-color: white;
+        }
+
+        #textdraw {
+            transform: translateY(110%);
+        }
+        
+        #linedraw {
+            transform: translateY(220%);
+        }
     </style>
 
 </head>
-<body title="146.853.146.838 ops/sec">    
+<body title="146.853.146.838 ops/sec" style=" height: 10000px; overflow: scroll; background-color: slateblue">    
 
+<canvas id="textview" width="512" height="512"></canvas>
+<canvas id="textdraw" width="512" height="512"></canvas>
+<canvas id="linedraw" width="512" height="512"></canvas>
+<script>
+    let ctxread = textview.getContext("2d");
+    let ctxdraw = textdraw.getContext("2d");
+    let ctxline = linedraw.getContext("2d");
+
+    ctxread.scale(devicePixelRatio, devicePixelRatio);
+    ctxdraw.scale(devicePixelRatio, devicePixelRatio);
+    ctxline.scale(devicePixelRatio, devicePixelRatio);
+
+    ctxread.textRendering = "geometricPrecision";
+    ctxread.font = "bold 256px serif";
+    ctxread.textBaseline = "bottom";
+    ctxread.textAlign = "middle";
+    ctxdraw.fillStyle = "green";
+    ctxline.fillStyle = "fuchia";
+    ctxline.strokeStyle = "red";
+
+    let letter = "o";
+    let textread = ctxread.measureText(letter);
+
+    let tx = ((textview.width/devicePixelRatio) - (textread.width))/2;
+    let ty = textread.fontBoundingBoxAscent;
+    
+    ctxread.strokeText(letter, tx, ty);
+
+    console.log( "metrics:", textread, "textview.width:", textview.width, {tx, ty} )
+
+
+    let width = textview.width;
+    let height = textview.height;
+    let imageData = ctxread.getImageData(0, 0, width, height);
+    let i, r, g, b, a, x, y, d, m;
+
+    let rgbaCount = imageData.data.length;
+    let pixelCount = Math.sqrt( imageData.width * imageData.height );
+
+    let reads = 0;
+    let draws = [];
+    let point ;
+
+    x = 0;
+    y = 0;
+    i = 0;
+    d = 0;
+    m = 0;
+
+    while ( i < imageData.data.length ) {
+        [ r, g, b, a ] = imageData.data.subarray( i, i + 4 );
+
+        if ( a || r || g || b ) {
+
+            point = {
+                i : draws.length,
+                d , m : Math.sqrt(
+                    Math.pow( x/devicePixelRatio, 2 ) +
+                    Math.pow( y/devicePixelRatio, 2 )
+                ),
+                x : x/devicePixelRatio,
+                y : y/devicePixelRatio, 
+                a
+            };
+
+            draws[ point.i ] = point;
+
+        }
+
+        if ( 0 === (i % (pixelCount * 4)) ) {
+            y = y + 1;
+            x = 0;
+        }
+
+        x += 1;
+        i += 4;
+    }
+
+    draws.forEach( ({ x, y }) => {
+        ctxdraw.fillRect( x, y, 1, 1 );
+    });
+
+
+    for ( let i=1; i<draws.length; i++ ) {
+        draws[i].d = Math.sqrt(
+            Math.pow( ( draws[i].x - draws[i-1].x ), 2 ) +
+            Math.pow( ( draws[i].y - draws[i-1].y ), 2 )
+        )
+    }
+    draws = Object.groupBy(draws, d => d.d < 1 ).true;
+
+    let groups = [
+        [ draws.splice(0,1)[0] ]
+    ]
+
+    i = 0;
+    
+    for ( let i=0; i<draws.length; i++ ) {
+        let found = false;
+
+        for ( let p=0; p<groups.length; p++ ) {
+
+            for ( let g=0; g<groups[p].length; g++ ) {
+
+                d = Math.sqrt(
+                    Math.pow( ( groups[p][g].x - draws[i].x ), 2 ) +
+                    Math.pow( ( groups[p][g].y - draws[i].y ), 2 )
+                )
+
+                m = Math.sqrt(
+                    Math.pow( ( groups[p][g].m - draws[i].m ), 2 )
+                )
+
+                if ( d < 5 ) {
+                    groups[p].push(draws[i])
+                    found = true;
+                    break; break;
+                }
+            }
+        }
+        
+        if (!found) {
+            groups.push([draws[i]])
+        }
+    }
+
+
+    let colors = [
+        "red", "blue", "green", "aqua", "brown", "chartreuse", "gray", "black"
+    ]
+
+    groups.forEach(function ( group, i ){
+        ctxline.fillStyle = colors[ i% 8 ];
+        group.forEach(function ({ x, y }){
+            ctxline.fillRect( x, y, 1, 1 );
+        })
+    })
+    console.log(groups)
+
+
+
+
+    /*
+    let groups = [ draws ];
+
+    groups = groups.filter( g => g.length > 10 )
+
+    groups.forEach( (group, j) => {
+
+        group = groups[j].sort( (a,b) => {
+            return Math.sqrt(
+                Math.pow( ( a.x - b.x ), 2 ) +
+                Math.pow( ( a.y - b.y ), 2 )
+            )
+        })
+
+        console.warn( "group:" + j, group );
+        
+        for ( let i=0; i<group.length; i+=2 ) {
+            ctxline.strokeStyle = colors[(i/2)%8]
+            ctxline.beginPath();
+            ctxline.moveTo(
+                group[i].x,
+                group[i].y
+            );
+            if (group[i+1]) {
+                ctxline.lineTo(
+                    group[i+1].x,
+                    group[i+1].y
+                );
+            }
+            ctxline.closePath();
+            ctxline.stroke();
+        }
+
+    })
+
+
+*/
+
+
+    /*
+
+    let pairs = [];
+    let dist0;
+    let dist1;
+    let diff;
+    let x1, y1;
+    let closest;
+
+    let max = 42;
+    let dlen = draws.length;
+    let reversed = false;
+
+    console.log("draws.length:", draws)
+
+    findClosest = function (i = 0) {
+
+        i = Math.abs(i);
+
+        if (!draws[i]) {
+            throw pairs;
+        }
+
+        let { x: x0, y: y0, i: i0 } = draws[i];
+        let _len = draws.length;
+
+        let dy0 = Math.sqrt( y0*y0 );
+        let dx0 = Math.sqrt( x0*x0 );
+        let d0  = Math.sqrt( x0*x0 + y0*y0 );
+
+        let dists = [];
+
+        let k;
+
+        if ( reversed ) {
+            k = _len-1;
+        }
+        else {
+            k = i + 1
+        }
+
+        let inloop = draws[ k ].x;        
+
+        while ( inloop ) {
+
+           
+            if ( reversed ) {
+                
+                if ( !draws[ --k ] ) {
+                    inloop = false;
+                }
+            }
+            else {
+                if ( !draws[ k++ ] ) {
+                    inloop = false;
+                    reversed = true;
+                }
+            }
+
+            if (!draws[ k ]) {
+                if (!k) {
+                    break;
+                }
+                continue;
+            }
+
+            let { x: x1, y: y1, i: i1, paired: p } = draws[ k ];
+
+            let dy1 = Math.sqrt( y1*y1 );
+            let dx1 = Math.sqrt( x1*x1 );
+            let d1  = Math.sqrt( x1*x1 + y1*y1 );
+
+            let dy = Math.abs( dy1 - dy0 );
+            let dx = Math.abs( dx1 - dx0 );
+            let d  = Math.sqrt(
+                Math.pow( x1 - x0, 2 ) + 
+                Math.pow( y1 - y0, 2 )
+            );
+
+            if (d && d < 6.4 && !p) {
+                dists.push({
+                    i: i1, d, x: x1, y: y1
+                });
+            }
+        }
+
+        if ( dists.length === 0 ) {
+            if ( reversed ) {
+                return;
+            }
+            else {
+                return findClosest( i );
+            }
+        }
+
+        dists.sort(function ( a, b ){
+            if ( a.dy > b.dy ) {
+                return +1;
+            }
+            return -1;
+        });
+
+        let dsy = dists[0].y;
+        
+        dists = dists
+            .filter( d => d.y === dsy )
+            .sort(function ( a, b ){
+            if ( a.d > b.d ) {
+                return +1;
+            }
+            return -1;
+        });
+
+
+        let closests = dists;
+        let closest = closests.at(0);
+
+        if (!closest) {
+            return;
+        }
+
+
+        pairs.push( {
+            from : { i: i0, x: x0, y: y0 },
+            to : { i: closest.i, x: closest.x, y: closest.y  }
+        })
+
+        draws[i0].paired = 1;
+
+        if (--dlen) {
+            return findClosest( closest.i );
+        }
+    }
+
+
+    findClosest(0)
+
+    ctxline.beginPath();
+    ctxline.strokeStyle = "green";
+
+    let plen = pairs.length;
+
+    while( plen-- ) {
+        ctxline.moveTo(
+            pairs[plen].from.x,
+            pairs[plen].from.y
+        );
+
+        ctxline.lineTo(
+            pairs[plen].to.x,
+            pairs[plen].to.y
+        );
+    }
+
+    ctxline.stroke();
+    console.log( pairs )
+    */
+
+</script>
+
+
+<!--
 <script src="3dtr.js">
 
     new Uint8Array( Math.trunc(performance.now()) );
     const screen = new OnscreenCanvas();
-    let red = 0, green = 0.5 , blue= 0.3, sign = 1, factor = 0.01;
+    let red = 0.1, green = 0.3 , blue= 0.9, sign = 1, factor = 0.002;
+
 
     screen.render(function (gl){
 
@@ -57,5 +419,6 @@
     log({ screen });
 
 </script>
+-->
 </body>
 </html>
