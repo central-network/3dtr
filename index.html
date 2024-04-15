@@ -69,11 +69,11 @@
     ctxline.fillStyle = "fuchia";
     ctxline.strokeStyle = "red";
 
-    let letter = "öü";
+    let letter = "‰";
     let textread = ctxread.measureText(letter);
 
     let tx = ((textview.width/devicePixelRatio) - (textread.width))/2;
-    let ty = textread.fontBoundingBoxAscent - 35;
+    let ty = textread.fontBoundingBoxAscent - 25;
     
     ctxread.strokeText(letter, tx, ty);
 
@@ -231,10 +231,7 @@
         console.groupCollapsed("merging groups...");
 
         mergeGroups();
-        let times = groups.length;
-
-        while (times--)
-            mergeGroups(times);
+        mergeGroups(3);
 
         console.groupEnd();
 
