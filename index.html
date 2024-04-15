@@ -69,11 +69,11 @@
     ctxline.fillStyle = "fuchia";
     ctxline.strokeStyle = "red";
 
-    let letter = "A";
+    let letter = "öü";
     let textread = ctxread.measureText(letter);
 
     let tx = ((textview.width/devicePixelRatio) - (textread.width))/2;
-    let ty = textread.fontBoundingBoxAscent;
+    let ty = textread.fontBoundingBoxAscent - 35;
     
     ctxread.strokeText(letter, tx, ty);
 
@@ -132,106 +132,126 @@
     });
 
 
-    for ( let i=1; i<draws.length; i++ ) {
-        draws[i].d = Math.sqrt(
-            Math.pow( ( draws[i].x - draws[i-1].x ), 2 ) +
-            Math.pow( ( draws[i].y - draws[i-1].y ), 2 )
-        )
-    }
-    draws = Object.groupBy(draws, d => d.d < 1 ).true;
+    queueMicrotask(function (){
 
-    let groups = [
-        [ draws.splice(0,1)[0] ]
-    ]
-
-    i = 0;
-    
-    for ( let i=0; i<draws.length; i++ ) {
-        let found = false;
-
-        for ( let p=0; p<groups.length; p++ ) {
-
-            for ( let g=0; g<groups[p].length; g++ ) {
-
-                d = Math.sqrt(
-                    Math.pow( ( groups[p][g].x - draws[i].x ), 2 ) +
-                    Math.pow( ( groups[p][g].y - draws[i].y ), 2 )
-                )
-
-                m = Math.sqrt(
-                    Math.pow( ( groups[p][g].m - draws[i].m ), 2 )
-                )
-
-                if ( d < 1 ) {
-                    groups[p].push(draws[i])
-                    found = true;
-                    break; break;
-                }
-            }
+        console.log("calculating distances...");
+        for ( let i=1; i<draws.length; i++ ) {
+            draws[i].d = Math.sqrt(
+                Math.pow( ( draws[i].x - draws[i-1].x ), 2 ) +
+                Math.pow( ( draws[i].y - draws[i-1].y ), 2 )
+            )
         }
+        draws = Object.groupBy(draws, d => d.d < 1 ).true;
 
-        if (!found) {
-            groups.push([draws[i]])
-        }
-    }
+        let groups = [
+            [ draws.splice(0,1)[0] ]
+        ]
 
-    let len0 = groups.length;
-    let len1 = groups.length;
+        i = 0;
+        
+        console.log("creating groups...");
+        for ( let i=0; i<draws.length; i++ ) {
+            let found = false;
 
-    i = 0;
-    j = 0;
+            for ( let p=0; p<groups.length; p++ ) {
 
-    const mergeGroups = function ( i = 0 ) {
-        let slen = groups.length;
-        let group0 = groups[i];
+                for ( let g=0; g<groups[p].length; g++ ) {
 
-        group0 && groups.forEach( (group1) => {
-            if ( !group1 || !group1.length || (group1 === group0) ) {
-                return mergeGroups(i+1);
-            }
-
-            for (let p=0; p<group0.length; p++ ) {
-                let point0 = group0[p];
-                
-                for (let l=0; l<group1.length; l++ ) {
-
-                    let point1 = group1[l];
-                    
                     d = Math.sqrt(
-                        Math.pow( ( point0.x - point1.x ), 2 ) +
-                        Math.pow( ( point0.y - point1.y ), 2 )
+                        Math.pow( ( groups[p][g].x - draws[i].x ), 2 ) +
+                        Math.pow( ( groups[p][g].y - draws[i].y ), 2 )
+                    )
+
+                    m = Math.sqrt(
+                        Math.pow( ( groups[p][g].m - draws[i].m ), 2 )
                     )
 
                     if ( d < 1 ) {
-                        group0.push( ...group1.splice(0) );
+                        groups[p].push(draws[i])
+                        found = true;
+                        break; break;
                     }
-                }                    
+                }
             }
-        })
 
-        groups = groups.filter(g => g.length);
-
-        if (groups.length === slen) {
-            return groups;
+            if (!found) {
+                groups.push([draws[i]])
+            }
         }
 
-        mergeGroups(i+1)
-    }
+        let len0 = groups.length;
+        let len1 = groups.length;
 
-    mergeGroups();
+        i = 0;
+        j = 0;
+         
+        const mergeGroups = function ( i = 0 ) {
+            
+            if (groups[i]){
+
+                let group0 = groups[i];
+                group0.inloop = 1;
+
+                groups.forEach( ( group1 ) => {
+                    if ( group1 && !group1.inloop && ( group0 !== group1 ) ) {
+                        for (let p=0; p<group0.length; p++ ) {
+                            let point0 = group0[p];
+                            
+                            for (let l=0; l<group1.length; l++ ) {
+        
+                                let point1 = group1[l];
+                                
+                                d = Math.sqrt(
+                                    Math.pow( ( point0.x - point1.x ), 2 ) +
+                                    Math.pow( ( point0.y - point1.y ), 2 )
+                                )
+        
+                                if ( d < 1 ) {
+                                    group0.push( ...group1.splice(0) );
+                                    return;
+                                }
+                            }                    
+                        }
+                    }
+                })
+
+                group0.inloop = 0;
+            }
+
+            groups = groups.filter(g => g.length);
+
+            if (len0 === ++i) {
+                return groups;
+            }
+
+            console.warn("merging groups...", groups.length);
+            return mergeGroups(i)
+        }
+
+        console.groupCollapsed("merging groups...");
+
+        mergeGroups();
+        let times = groups.length;
+
+        while (times--)
+            mergeGroups(times);
+
+        console.groupEnd();
 
 
-    let colors = [
-        "red", "blue", "green", "aqua", "brown", "chartreuse", "gray", "black"
-    ]
+        let colors = [
+            "red", "blue", "green", "aqua", "brown", "chartreuse", "gray", "black"
+        ]
 
-    groups.forEach(function ( group, i ){
-        ctxline.fillStyle = colors[ i% 8 ];
-        group.forEach(function ({ x, y }){
-            ctxline.fillRect( x, y, 1, 1 );
+        groups.forEach(function ( group, i ){
+            ctxline.fillStyle = colors[ i% 8 ];
+            group.forEach(function ({ x, y }){
+                ctxline.fillRect( x, y, 1, 1 );
+            })
         })
+        console.log(groups)
     })
-    console.log(groups)
+
 
 
 
