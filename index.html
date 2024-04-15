@@ -69,7 +69,7 @@
     ctxline.fillStyle = "fuchia";
     ctxline.strokeStyle = "red";
 
-    let letter = "b";
+    let letter = "A";
     let textread = ctxread.measureText(letter);
 
     let tx = ((textview.width/devicePixelRatio) - (textread.width))/2;
@@ -187,7 +187,7 @@
 
         group0 && groups.forEach( (group1) => {
             if ( !group1 || !group1.length || (group1 === group0) ) {
-                return;
+                return mergeGroups(i+1);
             }
 
             for (let p=0; p<group0.length; p++ ) {
