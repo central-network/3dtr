@@ -62,18 +62,18 @@
     ctxline.scale(devicePixelRatio, devicePixelRatio);
 
     ctxread.textRendering = "geometricPrecision";
-    ctxread.font = "bold 128px serif";
+    ctxread.font = "bold 256px serif";
     ctxread.textBaseline = "bottom";
     ctxread.textAlign = "middle";
     ctxdraw.fillStyle = "purple";
     ctxline.fillStyle = "fuchia";
     ctxline.strokeStyle = "red";
 
-    let letter = ",.";
+    let letter = "ö";
     let textread = ctxread.measureText(letter);
 
     let tx = ((textview.width/devicePixelRatio) - (textread.width))/2 - 30;
-    let ty = textread.fontBoundingBoxAscent - 45;
+    let ty = textread.fontBoundingBoxAscent //- 45;
     
     //ctxread.fillText(letter, tx, ty);
     ctxread.fillText(letter, tx, ty);
@@ -504,70 +504,119 @@
             return mergeGroups(i)
         }
 
-        console.groupCollapsed("merging groups...");
+        const cleanGroups = function () {
+            groups.forEach(function ( group, i ){
+                group.sort( (a,b) => {
+                    if ( a.row > b.row ) {
+                        return 3
+                    } else if ( a.row === b.row ) {
+                        if ( a.col > b.col ) {
+                            return 1
+                        } else { return -2 }
+                    } else { return -1 }
+                })
+            })
 
+
+            groups.forEach(function ( group, g ){
+
+                let i, begin, end, splices;
+
+                i = 0;
+                splices = []
+                while ( i < group.length ) {
+
+                    if (!group[i-1]) {
+                        begin = end = i++
+                        continue
+                    }
+
+                    if ( group[i].row === group[i-1].row ) {
+                        if ( group[i].col !== group[i-1].col + 1 ) {
+                            splices.push( [ ++begin, end ] )
+                            begin = i
+                        }
+                    }
+                    else {
+                        splices.push( [ ++begin, end ] )
+                        begin = i
+                    }
+
+                    end = i
+                    i++
+                }
+
+                splices.forEach( ([begin, end]) => group.fill(false, begin, end ) )
+                splices.length = 0
+                groups[g] = group.filter(Boolean)
+
+            })
+
+
+            groups.forEach(function ( group, i ){
+                group.sort( (a,b) => {
+                    if ( a.col > b.col ) {
+                        return 3
+                    } else if ( a.col === b.col ) {
+                        if ( a.row > b.row ) {
+                            return 1
+                        } else { return -2 }
+                    } else { return -1 }
+                })
+            })
+
+            groups.forEach(function ( group, g ){
+
+                let i, begin, end, splices;
+
+                i = 0;
+                splices = []
+                while ( i < group.length ) {
+
+                    if (!group[i-1]) {
+                        begin = end = i++
+                        continue
+                    }
+
+                    if ( group[i].col === group[i-1].col ) {
+                        if ( group[i].row !== group[i-1].row + 1 ) {
+                            splices.push( [ ++begin, end ] )
+                            begin = i
+                        }
+                    }
+                    else {
+                        splices.push( [ ++begin, end ] )
+                        begin = i
+                    }
+
+                    end = i
+                    i++
+                }
+
+                splices.forEach( ([begin, end]) => group.fill(false, begin, end ) )
+                splices.length = 0
+                groups[g] = group.filter(Boolean)
+
+            })
+
+        }
+
+
+
+        console.groupCollapsed("merging groups...");
         mergeGroups();
         mergeGroups(3);
+        console.groupEnd();
 
+        
+        console.groupCollapsed("cleaning groups...");
+        cleanGroups();
         console.groupEnd();
 
 
         let colors = [
             "red", "blue", "green", "aqua", "brown", "chartreuse", "gray", "black"
         ]
-
-
-        groups.forEach(function ( group, i ){
-            group.sort( (a,b) => {
-                if ( a.row > b.row ) {
-                    return 3
-                } else if ( a.row === b.row ) {
-                    if ( a.col > b.col ) {
-                        return 1
-                    } else { return -2 }
-                } else { return -1 }
-            })
-        })
-
-
-        groups.forEach(function ( group ){
-            let i = 0;
-            let row, col, len;
-
-            let begin, end, at;
-            let splices = []
-
-
-            while ( i < group.length ) {
-
-                if (!group[i-1]) {
-                    begin = end = i++
-                    continue
-                }
-
-                if ( group[i].row === group[i-1].row ) {
-                    col = group[i-1].col
-                    if ( group[i].col < col-2 || group[i].col > col+2 ) {
-                        splices.push( [ ++begin, end ] )
-                        begin = i
-                    }
-                }
-                else {
-                    splices.push( [ ++begin, end ] )
-                    begin = i
-                }
-
-                end = i
-                i++
-            }
-
-            splices.forEach( ([begin, end]) => group.fill(false, begin, end ) )
-            console.warn(splices)
-
-
-        })
-
-
 
         groups.forEach(function ( group, i ){
             ctxline.fillStyle = colors[ i% 8 ];
