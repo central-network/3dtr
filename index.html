@@ -53,15 +53,15 @@
     </style>
 
 </head>
-<body title="146.853.146.838 ops/sec" style=" height: 10000px; overflow: scroll; background-color: slateblue">    
+<body title="146.853.146.838 ops/sec" style="overflow: scroll; background-color: slateblue">    
 
 <script>
 
     const drawAndRead = async function ( letter, size, method, isReversed ) {
 
         if (!size) {
-            await drawAndRead( letter, 64 )
-            await drawAndRead( letter, 128 )
+            //await drawAndRead( letter, 32 )
+            await drawAndRead( letter, 256 )
             return;
         }
 
@@ -72,7 +72,7 @@
         }
 
         if (isReversed === undefined) {
-            await drawAndRead( letter, size, method, true )
+            //await drawAndRead( letter, size, method, true )
             await drawAndRead( letter, size, method, false )
             return
         }
@@ -106,10 +106,14 @@
         ctxdraw.scale(devicePixelRatio, devicePixelRatio);
         ctxline.scale(devicePixelRatio, devicePixelRatio);
 
-        ctxread.font            = "bold "+size+"px serif";
-        ctxread.textAlign       = "middle";
-        ctxread.textBaseline    = "top";
+        ctxread.font            = "bold "+(size*0.8)+"px serif";
+        ctxread.textAlign       = "center";
+        ctxread.textBaseline    = "bottom";
         ctxread.textRendering   = "geometricPrecision";
+        ctxread.lineWidth       = 2;
+        ctxread.fontKerning     = "none";
+
+
         
         ctxdraw.fillStyle       = "purple";
         ctxdraw.strokeStyle     = "red";
@@ -118,13 +122,14 @@
             ctxdraw.strokeStyle = "white";
         }
         
-        let tx = size/2/devicePixelRatio;
-        let ty = size/10;
+        let tx = size/2;
+        let ty = size;
         let read = []
         let draws = [];
         let groups = [];
         let count = -1;
         
+
         ctxread[ method + "Text" ].call(ctxread, letter, tx, ty);
 
         let imageData = ctxread.getImageData(0, 0, size * devicePixelRatio, size * devicePixelRatio);
@@ -298,7 +303,7 @@
 
         draws = getFontDraws( imageData );
 
-        console.log( "draw count for "+size+"px \t:", read.length, "   \t<--", new RegExp(method)," \t", {isReversed} )
+        console.log( "draw count for "+size+"px \t:", draws.length, "   \t<--", new RegExp(method)," \t", {isReversed} )
 
         draws.forEach( ({ x, y }) => {
             ctxdraw.fillRect( x, y, 1, 1 );
@@ -321,8 +326,24 @@
         })        
     }
 
-    queueMicrotask(function (){
-        drawAndRead( "t" )
+    queueMicrotask(async function (){
+
+        return drawAndRead("½")
+
+        let max = 35;
+        let codei = 0;
+
+        let draw = function () {
+            drawAndRead( String.fromCharCode( 33 + codei++ ) ).then(function (){
+                if ( codei < max ) {
+                    draw()
+                }
+            })
+            scrollTo(0, document.querySelector(".container:last-child").offsetTop - 800);
+        }
+
+        draw()
+
     });
 
 
