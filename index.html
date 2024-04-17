@@ -27,100 +27,581 @@
             white-space: nowrap;
         }
 
-        #textview, #textdraw, #linedraw {
-            width: 256px;
-            height: 256px;
-            position: absolute;
-            z-index: 1;
-            left: 50%;
-            margin-left: -128px;
+        canvas {
             background-color: white;
+            margin: 5px;
         }
 
-        #textdraw {
-            transform: translateY(110%);
+        div.container {
+            background-color: rgb(15, 20, 59);
+            display: block;
+            overflow: hidden;
+            position: relative;
+            padding: 5px;
+            margin-bottom: 5px;
         }
-        
-        #linedraw {
-            transform: translateY(220%);
+
+        div.container::after {
+            content: attr(id) "px";
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            color: white;
+            font-size: 10px;
         }
+
     </style>
 
 </head>
 <body title="146.853.146.838 ops/sec" style=" height: 10000px; overflow: scroll; background-color: slateblue">    
 
-<canvas id="textview" width="512" height="512"></canvas>
-<canvas id="textdraw" width="512" height="512"></canvas>
-<canvas id="linedraw" width="512" height="512"></canvas>
 <script>
-    let ctxread = textview.getContext("2d");
-    let ctxdraw = textdraw.getContext("2d");
-    let ctxline = linedraw.getContext("2d");
 
-    ctxread.scale(devicePixelRatio, devicePixelRatio);
-    ctxdraw.scale(devicePixelRatio, devicePixelRatio);
-    ctxline.scale(devicePixelRatio, devicePixelRatio);
+    const drawAndRead = function ( letter, size, method, isReversed ) {
 
-    ctxread.textRendering = "geometricPrecision";
-    ctxread.font = "bold 256px serif";
-    ctxread.textBaseline = "bottom";
-    ctxread.textAlign = "middle";
-    ctxdraw.fillStyle = "purple";
-    ctxline.fillStyle = "fuchia";
-    ctxline.strokeStyle = "red";
+        if (!size) {
+            drawAndRead( letter, 32 )
+            drawAndRead( letter, 64 )
+            return;
+        }
 
-    let letter = "ö";
-    let textread = ctxread.measureText(letter);
+        if (!method) {
+            drawAndRead( letter, size, "fill" )
+            drawAndRead( letter, size, "stroke" )
+            return
+        }
 
-    let tx = ((textview.width/devicePixelRatio) - (textread.width))/2 - 30;
-    let ty = textread.fontBoundingBoxAscent //- 45;
-    
-    ctxread.fillText(letter, tx, ty);
-    //ctxread.strokeText(letter, tx, ty);
+        if (isReversed === undefined) {
+            drawAndRead( letter, size, method, true )
+            drawAndRead( letter, size, method, false )
+            return
+        }
 
-    console.log( "metrics:", textread, "textview.width:", textview.width, {tx, ty} )
+        let container = document.createElement("div");
+        container.id = size;
+        container.className = "container";
+        document.body.append( container );
 
-    const getFontDraws = function ( imageData ) {
-        let draws = [];
-        let point;
+        let textview = document.createElement("canvas");
+        let textdraw = document.createElement("canvas");
+        let linedraw = document.createElement("canvas");
+
+        textview.width = textview.height =
+        textdraw.width = textdraw.height =
+        linedraw.width = linedraw.height = size * devicePixelRatio;
+
+        textview.style.width = textview.style.height =
+        textdraw.style.width = textdraw.style.height =
+        linedraw.style.width = linedraw.style.height = CSS.px( size );
+
+        container.append( textview )
+        container.append( textdraw )
+        container.append( linedraw )
+
+        let ctxread = textview.getContext("2d");
+        let ctxdraw = textdraw.getContext("2d");
+        let ctxline = linedraw.getContext("2d");
+
+        ctxread.scale(devicePixelRatio, devicePixelRatio);
+        ctxdraw.scale(devicePixelRatio, devicePixelRatio);
+        ctxline.scale(devicePixelRatio, devicePixelRatio);
+
+
+        ctxread.font            = "bold "+size+"px serif";
+        ctxread.textAlign       = "middle";
+        ctxread.textBaseline    = "top";
+        ctxread.textRendering   = "geometricPrecision";
         
-        let readPerLine = imageData.width * 4;
-        let [ i, r, g, b, a, y, x ] = [ 0, 0, 0, 0, 0, 0, 0 ];
+        ctxdraw.fillStyle       = "purple";
+        ctxdraw.strokeStyle     = "red";
+        
+        if ( isReversed ) {
+            ctxdraw.strokeStyle = "white";
+        }
 
-        while ( i < imageData.data.length ) {
-            
-            [ r, g, b, a ] = imageData.data.subarray( i, i + 4 );
-            
-            if ( a === 0xff ) {
+        ctxline.fillStyle       = "fuchia";
+        ctxline.strokeStyle     = "red";
 
-                point = {
-                    i : draws.length,
-                    row : x,
-                    col : y,
-                    m : Math.sqrt(
-                        Math.pow( x/devicePixelRatio, 2 ) +
-                        Math.pow( y/devicePixelRatio, 2 )
-                    ),
-                    x : x/devicePixelRatio,
-                    y : y/devicePixelRatio,
-                    a
-                };
 
-                draws[ point.i ] = point;
+        let tx = size/2/devicePixelRatio;
+        let ty = size/10;
+        let read = []
+        let draws = [];
+        
+        ctxread[ method + "Text" ].call(ctxread, letter, tx, ty);
+        let imageData = ctxread.getImageData(0, 0, size * devicePixelRatio, size * devicePixelRatio);
 
+
+        Array.prototype.transpose   = function () {
+            let transposed = [];
+            let Instanceof = this[0].constructor; 
+            let itemLength = this[0].length;
+
+
+            for (let row=0; row < itemLength; row++) {
+                for (let col=0; col < itemLength; col++) {
+                    if (!transposed[ col ]) {
+                        transposed[ col ] = new Instanceof( itemLength );
+                    }
+                    transposed[ col ][ row ] = this[ row ][ col ];
+                }
             }
 
-            x += 1
-            i += 4
+            for (let row=0; row < itemLength; row++) {            
+                for (let col=0; col < itemLength; col++) {
+                    this[ row ][ col ] = transposed[ row ][ col ];
+                }
+            }
 
-            if (0 === i % readPerLine ) {
-                y = 1 + y
-                x = 0
+            return this
+        }
+
+        const readFontFills         = function () {
+            let readPerLine = imageData.width * 4;
+            let buffer = new self.ArrayBuffer( imageData.width * imageData.height );
+            let [ i, r, g, b, a, y, x ] = [ 0, 0, 0, 0, 0, 0, 0 ];
+
+            while ( i < imageData.data.length ) {
+                
+                [ r, g, b, a ] = imageData.data.subarray( i, i + 4 );
+
+                if(!read[y]) {
+                    byteOffset = imageData.width * (i/imageData.width/4);
+                    read[y] = new self.Uint8Array( buffer, byteOffset, imageData.width );
+                }
+                
+                if ( a === 0xff ) {
+                    read[y][x] = a;
+                }
+
+                x += 1
+                i += 4
+
+                if (0 === i % readPerLine ) {
+                    y = 1 + y
+                    x = 0
+                }
+            }
+
+            return read;
+        }
+
+        const findGroups            = function () {
+
+            let reads = read;
+            let groups = 0;
+
+            for ( let row=4; row < reads.length-4; row++ ) {
+                for ( let col=4; col < reads[row].length-4; col++ ) {
+
+                    if (reads[row][col] !== 0xff ) {
+                        continue;
+                    }
+
+                    let searchs = [
+                        (row) , (col - 1),              // prev
+                        (row - 1) , col,                // above
+                        (row - 1) , (col - 1),          // above prev
+                        (row - 1) , (col + 1),          // above next
+                        (row + 1) , (col),              // below
+                        (row + 1) , (col - 1),          // below prev
+                        (row) , (col + 1),              // next
+                        
+                        (row) , (col - 2),              // prev
+                        (row - 2) , col,                // above
+                        (row - 2) , (col - 2),          // above prev
+                        (row - 2) , (col + 2),          // above next
+                        (row + 2) , (col),              // below
+                        (row + 2) , (col - 2),          // below prev
+                        (row) , (col + 2),              // next
+                    ];
+
+                    for ( let s=0; s<searchs.length; s+=2 ) {
+                        let group = reads[ searchs[s] ][ searchs[s+1] ];
+                        if (group % 0xff) {
+                            reads[row][col] = group;
+                            break;
+                        }
+                    }
+
+                    if ( reads[row][col] === 0xff ) {
+                        reads[row][col] = groups++;
+                    }
+                }
+            }
+
+            reads.transpose()
+
+            for ( let row=4; row < reads.length-4; row++ ) {
+                for ( let col=4; col < reads[row].length-4; col++ ) {
+                    if (reads[row][col] === 0 ) {
+                        continue;
+                    }
+
+                    let searchs = [
+                        (row) , (col - 1),              // prev
+                        (row - 1) , col,                // above
+                        (row - 1) , (col - 1),          // above prev
+                        (row - 1) , (col + 1),          // above next
+                        (row + 1) , (col),              // below
+                        (row + 1) , (col - 1),          // below prev
+                        (row) , (col + 1),              // next
+                        
+                        (row) , (col - 2),              // prev
+                        (row - 2) , col,                // above
+                        (row - 2) , (col - 2),          // above prev
+                        (row - 2) , (col + 2),          // above next
+                        (row + 2) , (col),              // below
+                        (row + 2) , (col - 2),          // below prev
+                        (row) , (col + 2),              // next
+                    ];
+
+                    for ( let s=0; s<searchs.length; s+=2 ) {
+                        let group = reads[ searchs[s] ][ searchs[s+1] ];
+                        if (group) {
+                            reads[row][col] = group;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            reads.reverse()
+
+            for ( let row=4; row < reads.length-4; row++ ) {
+                for ( let col=4; col < reads[row].length-4; col++ ) {
+                    if (reads[row][col] === 0 ) {
+                        continue;
+                    }
+
+                    let searchs = [
+                        (row) , (col - 1),              // prev
+                        (row - 1) , col,                // above
+                        (row - 1) , (col - 1),          // above prev
+                        (row - 1) , (col + 1),          // above next
+                        (row + 1) , (col),              // below
+                        (row + 1) , (col - 1),          // below prev
+                        (row) , (col + 1),              // next
+                        
+                        (row) , (col - 2),              // prev
+                        (row - 2) , col,                // above
+                        (row - 2) , (col - 2),          // above prev
+                        (row - 2) , (col + 2),          // above next
+                        (row + 2) , (col),              // below
+                        (row + 2) , (col - 2),          // below prev
+                        (row) , (col + 2),              // next
+                    ];
+
+                    for ( let s=0; s<searchs.length; s+=2 ) {
+                        let group = reads[ searchs[s] ][ searchs[s+1] ];
+                        if (group) {
+                            reads[row][col] = group;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            reads.reverse()
+            reads.transpose()
+
+            return reads;
+        }
+
+        const getFontDraws          = function () {
+
+            let point;
+            let draws = [];
+            let readPerLine = imageData.width * 4;
+            let [ i, r, g, b, a, y, x ] = [ 0, 0, 0, 0, 0, 0, 0 ];
+
+            while ( i < imageData.data.length ) {
+                
+                [ r, g, b, a ] = imageData.data.subarray( i, i + 4 );
+                
+                if ( (isReversed && (a === 0x00)) || (!isReversed && (a === 0xff)) ) {
+
+                    point = {
+                        i : draws.length,
+                        row : x,
+                        col : y,
+                        m : Math.sqrt(
+                            Math.pow( x/devicePixelRatio, 2 ) +
+                            Math.pow( y/devicePixelRatio, 2 )
+                        ),
+                        x : x/devicePixelRatio,
+                        y : y/devicePixelRatio,
+                        a
+                    };
+
+                    draws[ point.i ] = point;
+
+                }
+
+                x += 1
+                i += 4
+
+                if (0 === i % readPerLine ) {
+                    y = 1 + y
+                    x = 0
+                }
+            }
+
+            return draws;
+        } 
+
+        draws = getFontDraws( imageData );
+
+
+        //readFontFills()
+        //findGroups()
+
+        console.log( "draw count for "+size+"px \t:", draws.length, "   \t<--", new RegExp(method)," \t", {isReversed} )
+
+
+        draws.forEach( ({ x, y }) => {
+            ctxdraw.fillRect( x, y, 1, 1 );
+        });
+
+        console.log("calculating distances... draws:", draws.length);
+
+        for ( let i=1; i<draws.length; i++ ) {
+            draws[i].d = Math.sqrt(
+                Math.pow( ( draws[i].x - draws[i-1].x ), 2 ) +
+                Math.pow( ( draws[i].y - draws[i-1].y ), 2 )
+            )
+        }
+
+        
+        draws = Object.groupBy(draws, d => d.d < 1 ).true;
+
+        if (!draws) {
+            return
+        }
+
+        let groups = [
+            [ draws.splice(0,1)[0] ]
+        ]
+
+        i = 0;
+        
+        console.log("creating groups...");
+        for ( let i=0; i<draws.length; i++ ) {
+
+            let found = false;
+
+            for ( let p=0; p<groups.length; p++ ) {
+
+                for ( let g=0; g<groups[p].length; g++ ) {
+
+                    d = Math.sqrt(
+                        Math.pow( ( groups[p][g].x - draws[i].x ), 2 ) +
+                        Math.pow( ( groups[p][g].y - draws[i].y ), 2 )
+                    )
+
+                    m = Math.sqrt(
+                        Math.pow( ( groups[p][g].m - draws[i].m ), 2 )
+                    )
+
+                    if ( d < 1 ) {
+                        groups[p].push(draws[i])
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (found) {
+                    break;
+                }
+            }
+
+            if (!found) {
+                groups.push([draws[i]])
             }
         }
 
-        return draws;
-    } 
+        let len0 = groups.length;
+        let len1 = groups.length;
+
+        i = 0;
+        j = 0;
+         
+        const mergeGroups = function ( i = 0 ) {
+
+            if (!groups.find( (g) => g.length < 100 )) {
+                return groups;
+            }
+            
+            if (groups[i]){
+
+                let group0 = groups[i];
+                group0.inloop = 1;
+
+                groups.forEach( ( group1 ) => {
+                    if ( group1 && !group1.inloop && ( group0 !== group1 ) ) {
+                        for (let p=0; p<group0.length; p++ ) {
+                            let point0 = group0[p];
+                            
+                            for (let l=0; l<group1.length; l++ ) {
+        
+                                let point1 = group1[l];
+                                
+                                d = Math.sqrt(
+                                    Math.pow( ( point0.x - point1.x ), 2 ) +
+                                    Math.pow( ( point0.y - point1.y ), 2 )
+                                )
+        
+                                if ( d < 1 ) {
+                                    group0.push( ...group1.splice(0) );
+                                    return;
+                                }
+                            }                    
+                        }
+                    }
+                })
+
+                group0.inloop = 0;
+            }
+
+            groups = groups.filter(g => g.length);
+
+            if (len0 === ++i) {
+                return groups;
+            }
+
+            return mergeGroups(i)
+        }
+
+        const cleanGroups = function () {
+            groups.forEach(function ( group, i ){
+                group.sort( (a,b) => {
+                    if ( a.row > b.row ) {
+                        return 3
+                    } else if ( a.row === b.row ) {
+                        if ( a.col > b.col ) {
+                            return 1
+                        } else { return -2 }
+                    } else { return -1 }
+                })
+            })
+
+
+            groups.forEach(function ( group, g ){
+
+                let i, begin, end, splices;
+
+                i = 0;
+                splices = []
+                while ( i < group.length ) {
+
+                    if (!group[i-1]) {
+                        begin = end = i++
+                        continue
+                    }
+
+                    if ( group[i].row === group[i-1].row ) {
+                        if ( group[i].col !== group[i-1].col + 1 ) {
+                            splices.push( [ ++begin, end ] )
+                            begin = i
+                        }
+                    }
+                    else {
+                        splices.push( [ ++begin, end ] )
+                        begin = i
+                    }
+
+                    end = i
+                    i++
+                }
+
+                splices.forEach( ([begin, end]) => group.fill(false, begin, end ) )
+                splices.length = 0
+                groups[g] = group.filter(Boolean)
+
+            })
+
+
+            groups.forEach(function ( group, i ){
+                group.sort( (a,b) => {
+                    if ( a.col > b.col ) {
+                        return 3
+                    } else if ( a.col === b.col ) {
+                        if ( a.row > b.row ) {
+                            return 1
+                        } else { return -2 }
+                    } else { return -1 }
+                })
+            })
+
+            groups.forEach(function ( group, g ){
+
+                let i, begin, end, splices;
+
+                i = 0;
+                splices = []
+                while ( i < group.length ) {
+
+                    if (!group[i-1]) {
+                        begin = end = i++
+                        continue
+                    }
+
+                    if ( group[i].col === group[i-1].col ) {
+                        if ( group[i].row !== group[i-1].row + 1 ) {
+                            splices.push( [ ++begin, end ] )
+                            begin = i
+                        }
+                    }
+                    else {
+                        splices.push( [ ++begin, end ] )
+                        begin = i
+                    }
+
+                    end = i
+                    i++
+                }
+
+                splices.forEach( ([begin, end]) => group.fill(false, begin, end ) )
+                splices.length = 0
+                groups[g] = group.filter(Boolean)
+
+            })
+
+        }
+
+        console.groupCollapsed("merging groups...");
+        try {
+            mergeGroups();
+            mergeGroups(3);
+        }
+        catch (e) {
+            console.error(e)
+        }
+        console.groupEnd();
+
+        console.log("groups:", groups)
+        
+        console.groupCollapsed("cleaning groups...");
+        cleanGroups();
+        console.groupEnd();
+
+
+        let colors = [
+            "red", "blue", "green", "aqua", "brown", "chartreuse", "gray", "black"
+        ]
+
+        groups.forEach(function ( group, i ){
+            ctxline.fillStyle = colors[ i% 8 ];
+            group.forEach(function ({ x, y }){
+                ctxline.fillRect( x, y, 1, 1 );
+            })
+        })
+
+    }
+
+    drawAndRead( "ö" )
+
+
     
     /*
     Array.prototype.transpose = function () {
@@ -388,15 +869,10 @@
 
     */
 
-    let imageData = ctxread.getImageData(0, 0, textview.width, textview.height);
-    let draws = getFontDraws( imageData );
-
-    draws.forEach( ({ x, y }) => {
-        ctxdraw.fillRect( x, y, 1, 1 );
-    });
+    
 
 
-    queueMicrotask(function (){
+    0 && queueMicrotask(function (){
 
         console.log("calculating distances... draws:", draws.length);
 
@@ -598,8 +1074,6 @@
             })
 
         }
-
-
 
         console.groupCollapsed("merging groups...");
         mergeGroups();
