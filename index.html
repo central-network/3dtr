@@ -57,23 +57,23 @@
 
 <script>
 
-    const drawAndRead = function ( letter, size, method, isReversed ) {
+    const drawAndRead = async function ( letter, size, method, isReversed ) {
 
         if (!size) {
-            drawAndRead( letter, 32 )
-            drawAndRead( letter, 64 )
+            await drawAndRead( letter, 64 )
+            await drawAndRead( letter, 128 )
             return;
         }
 
         if (!method) {
-            drawAndRead( letter, size, "fill" )
-            drawAndRead( letter, size, "stroke" )
+            await drawAndRead( letter, size, "fill" )
+            await drawAndRead( letter, size, "stroke" )
             return
         }
 
         if (isReversed === undefined) {
-            drawAndRead( letter, size, method, true )
-            drawAndRead( letter, size, method, false )
+            await drawAndRead( letter, size, method, true )
+            await drawAndRead( letter, size, method, false )
             return
         }
 
@@ -106,7 +106,6 @@
         ctxdraw.scale(devicePixelRatio, devicePixelRatio);
         ctxline.scale(devicePixelRatio, devicePixelRatio);
 
-
         ctxread.font            = "bold "+size+"px serif";
         ctxread.textAlign       = "middle";
         ctxread.textBaseline    = "top";
@@ -114,47 +113,21 @@
         
         ctxdraw.fillStyle       = "purple";
         ctxdraw.strokeStyle     = "red";
-        
+
         if ( isReversed ) {
             ctxdraw.strokeStyle = "white";
         }
-
-        ctxline.fillStyle       = "fuchia";
-        ctxline.strokeStyle     = "red";
-
-
+        
         let tx = size/2/devicePixelRatio;
         let ty = size/10;
         let read = []
         let draws = [];
+        let groups = [];
+        let count = -1;
         
         ctxread[ method + "Text" ].call(ctxread, letter, tx, ty);
+
         let imageData = ctxread.getImageData(0, 0, size * devicePixelRatio, size * devicePixelRatio);
-
-
-        Array.prototype.transpose   = function () {
-            let transposed = [];
-            let Instanceof = this[0].constructor; 
-            let itemLength = this[0].length;
-
-
-            for (let row=0; row < itemLength; row++) {
-                for (let col=0; col < itemLength; col++) {
-                    if (!transposed[ col ]) {
-                        transposed[ col ] = new Instanceof( itemLength );
-                    }
-                    transposed[ col ][ row ] = this[ row ][ col ];
-                }
-            }
-
-            for (let row=0; row < itemLength; row++) {            
-                for (let col=0; col < itemLength; col++) {
-                    this[ row ][ col ] = transposed[ row ][ col ];
-                }
-            }
-
-            return this
-        }
 
         const readFontFills         = function () {
             let readPerLine = imageData.width * 4;
@@ -170,14 +143,12 @@
                     read[y] = new self.Uint8Array( buffer, byteOffset, imageData.width );
                 }
                 
-                if ( a === 0xff ) {
-                    read[y][x] = a;
-                }
+                read[y][x] = a;
 
                 x += 1
                 i += 4
 
-                if (0 === i % readPerLine ) {
+                if (0 === (i % readPerLine) ) {
                     y = 1 + y
                     x = 0
                 }
@@ -188,124 +159,99 @@
 
         const findGroups            = function () {
 
-            let reads = read;
-            let groups = 0;
+            for ( let row=4; row < read.length-4; row++ ) {
+                for ( let col=4; col < read[row].length-4; col++ ) {
 
-            for ( let row=4; row < reads.length-4; row++ ) {
-                for ( let col=4; col < reads[row].length-4; col++ ) {
-
-                    if (reads[row][col] !== 0xff ) {
+                    if (read[row][col] !== 0xff ) {
                         continue;
                     }
 
-                    let searchs = [
-                        (row) , (col - 1),              // prev
-                        (row - 1) , col,                // above
-                        (row - 1) , (col - 1),          // above prev
-                        (row - 1) , (col + 1),          // above next
-                        (row + 1) , (col),              // below
-                        (row + 1) , (col - 1),          // below prev
-                        (row) , (col + 1),              // next
-                        
-                        (row) , (col - 2),              // prev
-                        (row - 2) , col,                // above
-                        (row - 2) , (col - 2),          // above prev
-                        (row - 2) , (col + 2),          // above next
-                        (row + 2) , (col),              // below
-                        (row + 2) , (col - 2),          // below prev
-                        (row) , (col + 2),              // next
-                    ];
+                    let found = false;
+                    for (let g=0; g<groups.length; g++) {
+                        for (let i=0; i<groups[g].length; i++) {
+                            
+                            let [x0, y0] = groups[ g ][ i ];
+                            let [x1, y1] = [ col, row ];
 
-                    for ( let s=0; s<searchs.length; s+=2 ) {
-                        let group = reads[ searchs[s] ][ searchs[s+1] ];
-                        if (group % 0xff) {
-                            reads[row][col] = group;
+                            let dist = Math.sqrt(
+                                Math.pow( x0 - x1, 2 ) + 
+                                Math.pow( y0 - y1, 2 )
+                            )
+
+                            if (dist< (2 * devicePixelRatio)) {
+                                found = groups[g].push( [ x1, y1 ] )
+                                break;
+                            }                                    
+                        }
+                        if (found) {
                             break;
                         }
                     }
 
-                    if ( reads[row][col] === 0xff ) {
-                        reads[row][col] = groups++;
+                    if (!found) {
+                        groups[ read[row][col] = ++count ] = [ [ col, row ] ]
                     }
                 }
             }
 
-            reads.transpose()
 
-            for ( let row=4; row < reads.length-4; row++ ) {
-                for ( let col=4; col < reads[row].length-4; col++ ) {
-                    if (reads[row][col] === 0 ) {
-                        continue;
-                    }
-
-                    let searchs = [
-                        (row) , (col - 1),              // prev
-                        (row - 1) , col,                // above
-                        (row - 1) , (col - 1),          // above prev
-                        (row - 1) , (col + 1),          // above next
-                        (row + 1) , (col),              // below
-                        (row + 1) , (col - 1),          // below prev
-                        (row) , (col + 1),              // next
+            const findLinks = function () {
+                
+                let links = []
+                for (let g=0; g<groups.length; g++) {
+    
+                    let found = false;
+                    for (let i=0; i<groups[g].length; i++) {
                         
-                        (row) , (col - 2),              // prev
-                        (row - 2) , col,                // above
-                        (row - 2) , (col - 2),          // above prev
-                        (row - 2) , (col + 2),          // above next
-                        (row + 2) , (col),              // below
-                        (row + 2) , (col - 2),          // below prev
-                        (row) , (col + 2),              // next
-                    ];
+                        let [x0, y0] = groups[ g ][ i ];
 
-                    for ( let s=0; s<searchs.length; s+=2 ) {
-                        let group = reads[ searchs[s] ][ searchs[s+1] ];
-                        if (group) {
-                            reads[row][col] = group;
+                        let link = groups.findIndex( (group, j) => {
+
+                            if ( j === g ) { return !1 }
+                            else {
+                                let findex = group.findIndex( ( [x1, y1] ) => {
+    
+                                    let dist = Math.sqrt(
+                                        Math.pow( x0 - x1, 2 ) + 
+                                        Math.pow( y0 - y1, 2 )
+                                    )
+        
+                                    return dist <= devicePixelRatio;
+                                } );
+
+                                if (findex !== -1) {
+                                    return true
+                                }
+
+                                return !1
+                            }
+                        })
+    
+                        if ( link !== -1 ) {
+                            found = true;
+                            if (!links.find( ([a,b]) => (a === link) && (b === g) )) {
+                                links.push( [ g, link ] )
+                            }
                             break;
                         }
+                                                        
                     }
+
                 }
+
+                for (let l=0; l<links.length; l++) {
+                    let [ src, dst ] = links[l];
+                    groups[ dst ].push( ...groups[src] )
+                    groups[ src ].splice( 0 )
+                }
+    
+                groups = groups.filter( (g) => g.length )
+                return links.length
             }
 
-            reads.reverse()
+            while (findLinks()) { 1; }
 
-            for ( let row=4; row < reads.length-4; row++ ) {
-                for ( let col=4; col < reads[row].length-4; col++ ) {
-                    if (reads[row][col] === 0 ) {
-                        continue;
-                    }
-
-                    let searchs = [
-                        (row) , (col - 1),              // prev
-                        (row - 1) , col,                // above
-                        (row - 1) , (col - 1),          // above prev
-                        (row - 1) , (col + 1),          // above next
-                        (row + 1) , (col),              // below
-                        (row + 1) , (col - 1),          // below prev
-                        (row) , (col + 1),              // next
-                        
-                        (row) , (col - 2),              // prev
-                        (row - 2) , col,                // above
-                        (row - 2) , (col - 2),          // above prev
-                        (row - 2) , (col + 2),          // above next
-                        (row + 2) , (col),              // below
-                        (row + 2) , (col - 2),          // below prev
-                        (row) , (col + 2),              // next
-                    ];
-
-                    for ( let s=0; s<searchs.length; s+=2 ) {
-                        let group = reads[ searchs[s] ][ searchs[s+1] ];
-                        if (group) {
-                            reads[row][col] = group;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            reads.reverse()
-            reads.transpose()
-
-            return reads;
+            return read;
         }
 
         const getFontDraws          = function () {
@@ -352,254 +298,32 @@
 
         draws = getFontDraws( imageData );
 
-
-        //readFontFills()
-        //findGroups()
-
-        console.log( "draw count for "+size+"px \t:", draws.length, "   \t<--", new RegExp(method)," \t", {isReversed} )
-
+        console.log( "draw count for "+size+"px \t:", read.length, "   \t<--", new RegExp(method)," \t", {isReversed} )
 
         draws.forEach( ({ x, y }) => {
             ctxdraw.fillRect( x, y, 1, 1 );
         });
 
-        console.log("calculating distances... draws:", draws.length);
+        readFontFills()
+        findGroups()
 
-        for ( let i=1; i<draws.length; i++ ) {
-            draws[i].d = Math.sqrt(
-                Math.pow( ( draws[i].x - draws[i-1].x ), 2 ) +
-                Math.pow( ( draws[i].y - draws[i-1].y ), 2 )
-            )
-        }
-
-        
-        draws = Object.groupBy(draws, d => d.d < 1 ).true;
-
-        if (!draws) {
-            return
-        }
-
-        let groups = [
-            [ draws.splice(0,1)[0] ]
-        ]
-
-        i = 0;
-        
-        console.log("creating groups...");
-        for ( let i=0; i<draws.length; i++ ) {
-
-            let found = false;
-
-            for ( let p=0; p<groups.length; p++ ) {
-
-                for ( let g=0; g<groups[p].length; g++ ) {
-
-                    d = Math.sqrt(
-                        Math.pow( ( groups[p][g].x - draws[i].x ), 2 ) +
-                        Math.pow( ( groups[p][g].y - draws[i].y ), 2 )
-                    )
-
-                    m = Math.sqrt(
-                        Math.pow( ( groups[p][g].m - draws[i].m ), 2 )
-                    )
-
-                    if ( d < 1 ) {
-                        groups[p].push(draws[i])
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (found) {
-                    break;
-                }
-            }
-
-            if (!found) {
-                groups.push([draws[i]])
-            }
-        }
-
-        let len0 = groups.length;
-        let len1 = groups.length;
-
-        i = 0;
-        j = 0;
-         
-        const mergeGroups = function ( i = 0 ) {
-
-            if (!groups.find( (g) => g.length < 100 )) {
-                return groups;
-            }
-            
-            if (groups[i]){
-
-                let group0 = groups[i];
-                group0.inloop = 1;
-
-                groups.forEach( ( group1 ) => {
-                    if ( group1 && !group1.inloop && ( group0 !== group1 ) ) {
-                        for (let p=0; p<group0.length; p++ ) {
-                            let point0 = group0[p];
-                            
-                            for (let l=0; l<group1.length; l++ ) {
-        
-                                let point1 = group1[l];
-                                
-                                d = Math.sqrt(
-                                    Math.pow( ( point0.x - point1.x ), 2 ) +
-                                    Math.pow( ( point0.y - point1.y ), 2 )
-                                )
-        
-                                if ( d < 1 ) {
-                                    group0.push( ...group1.splice(0) );
-                                    return;
-                                }
-                            }                    
-                        }
-                    }
-                })
-
-                group0.inloop = 0;
-            }
-
-            groups = groups.filter(g => g.length);
-
-            if (len0 === ++i) {
-                return groups;
-            }
-
-            return mergeGroups(i)
-        }
-
-        const cleanGroups = function () {
-            groups.forEach(function ( group, i ){
-                group.sort( (a,b) => {
-                    if ( a.row > b.row ) {
-                        return 3
-                    } else if ( a.row === b.row ) {
-                        if ( a.col > b.col ) {
-                            return 1
-                        } else { return -2 }
-                    } else { return -1 }
-                })
-            })
-
-
-            groups.forEach(function ( group, g ){
-
-                let i, begin, end, splices;
-
-                i = 0;
-                splices = []
-                while ( i < group.length ) {
-
-                    if (!group[i-1]) {
-                        begin = end = i++
-                        continue
-                    }
-
-                    if ( group[i].row === group[i-1].row ) {
-                        if ( group[i].col !== group[i-1].col + 1 ) {
-                            splices.push( [ ++begin, end ] )
-                            begin = i
-                        }
-                    }
-                    else {
-                        splices.push( [ ++begin, end ] )
-                        begin = i
-                    }
-
-                    end = i
-                    i++
-                }
-
-                splices.forEach( ([begin, end]) => group.fill(false, begin, end ) )
-                splices.length = 0
-                groups[g] = group.filter(Boolean)
-
-            })
-
-
-            groups.forEach(function ( group, i ){
-                group.sort( (a,b) => {
-                    if ( a.col > b.col ) {
-                        return 3
-                    } else if ( a.col === b.col ) {
-                        if ( a.row > b.row ) {
-                            return 1
-                        } else { return -2 }
-                    } else { return -1 }
-                })
-            })
-
-            groups.forEach(function ( group, g ){
-
-                let i, begin, end, splices;
-
-                i = 0;
-                splices = []
-                while ( i < group.length ) {
-
-                    if (!group[i-1]) {
-                        begin = end = i++
-                        continue
-                    }
-
-                    if ( group[i].col === group[i-1].col ) {
-                        if ( group[i].row !== group[i-1].row + 1 ) {
-                            splices.push( [ ++begin, end ] )
-                            begin = i
-                        }
-                    }
-                    else {
-                        splices.push( [ ++begin, end ] )
-                        begin = i
-                    }
-
-                    end = i
-                    i++
-                }
-
-                splices.forEach( ([begin, end]) => group.fill(false, begin, end ) )
-                splices.length = 0
-                groups[g] = group.filter(Boolean)
-
-            })
-
-        }
-
-        console.groupCollapsed("merging groups...");
-        try {
-            mergeGroups();
-            mergeGroups(3);
-        }
-        catch (e) {
-            console.error(e)
-        }
-        console.groupEnd();
-
-        console.log("groups:", groups)
-        
-        console.groupCollapsed("cleaning groups...");
-        cleanGroups();
-        console.groupEnd();
-
+        console.warn(groups);
 
         let colors = [
             "red", "blue", "green", "aqua", "brown", "chartreuse", "gray", "black"
         ]
 
         groups.forEach(function ( group, i ){
-            ctxline.fillStyle = colors[ i% 8 ];
-            group.forEach(function ({ x, y }){
-                ctxline.fillRect( x, y, 1, 1 );
+            ctxline.fillStyle = colors[ i % (colors.length-1) ];
+            group.forEach(function ([x, y]){
+                ctxline.fillRect( x/devicePixelRatio, y/devicePixelRatio, 1, 1 );
             })
-        })
-
+        })        
     }
 
-    drawAndRead( "ö" )
+    queueMicrotask(function (){
+        drawAndRead( "t" )
+    });
 
 
     
@@ -699,42 +423,42 @@
         return read;
     } 
 
-    const clearGroups = function ( reads ) {
+    const clearGroups = function ( read ) {
 
         let pos;
 
-        for ( let row=0; row < reads.length; row++ ) {
+        for ( let row=0; row < read.length; row++ ) {
             pos = 0;
-            while ( (pos = reads[ row ].findIndex( (c, p) => c && p > pos )) > 0  ) {
-                reads[ row ].fill( 0, ++pos, -1 + reads[ row ].indexOf(0, pos) )
+            while ( (pos = read[ row ].findIndex( (c, p) => c && p > pos )) > 0  ) {
+                read[ row ].fill( 0, ++pos, -1 + read[ row ].indexOf(0, pos) )
             }
         }
 
-        return reads;
+        return read;
 
 
-        reads.transpose()
+        read.transpose()
 
-        for ( let row=0; row < reads.length; row++ ) {
+        for ( let row=0; row < read.length; row++ ) {
             pos = 0;
-            while ( (pos = reads[ row ].findIndex( (c, p) => c && p > pos )) > 0  ) {
-                reads[ row ].fill( 0, ++pos, -1 + reads[ row ].indexOf(0, pos) )
+            while ( (pos = read[ row ].findIndex( (c, p) => c && p > pos )) > 0  ) {
+                read[ row ].fill( 0, ++pos, -1 + read[ row ].indexOf(0, pos) )
             }
         }
 
-        reads.transpose()
+        read.transpose()
 
-        return reads
+        return read
     }
 
-    const findGroups = function ( reads ) {
+    const findGroups = function ( read ) {
 
         let groups = 0;
 
-        for ( let row=4; row < reads.length-4; row++ ) {
-            for ( let col=4; col < reads[row].length-4; col++ ) {
+        for ( let row=4; row < read.length-4; row++ ) {
+            for ( let col=4; col < read[row].length-4; col++ ) {
 
-                if (reads[row][col] !== 0xff ) {
+                if (read[row][col] !== 0xff ) {
                     continue;
                 }
 
@@ -757,24 +481,24 @@
                 ];
 
                 for ( let s=0; s<searchs.length; s+=2 ) {
-                    let group = reads[ searchs[s] ][ searchs[s+1] ];
+                    let group = read[ searchs[s] ][ searchs[s+1] ];
                     if (group % 0xff) {
-                        reads[row][col] = group;
+                        read[row][col] = group;
                         break;
                     }
                 }
 
-                if ( reads[row][col] === 0xff ) {
-                    reads[row][col] = groups++;
+                if ( read[row][col] === 0xff ) {
+                    read[row][col] = groups++;
                 }
             }
         }
 
-        reads.transpose()
+        read.transpose()
 
-        for ( let row=4; row < reads.length-4; row++ ) {
-            for ( let col=4; col < reads[row].length-4; col++ ) {
-                if (reads[row][col] === 0 ) {
+        for ( let row=4; row < read.length-4; row++ ) {
+            for ( let col=4; col < read[row].length-4; col++ ) {
+                if (read[row][col] === 0 ) {
                     continue;
                 }
 
@@ -797,20 +521,20 @@
                 ];
 
                 for ( let s=0; s<searchs.length; s+=2 ) {
-                    let group = reads[ searchs[s] ][ searchs[s+1] ];
+                    let group = read[ searchs[s] ][ searchs[s+1] ];
                     if (group) {
-                        reads[row][col] = group;
+                        read[row][col] = group;
                         break;
                     }
                 }
             }
         }
 
-        reads.reverse()
+        read.reverse()
 
-        for ( let row=4; row < reads.length-4; row++ ) {
-            for ( let col=4; col < reads[row].length-4; col++ ) {
-                if (reads[row][col] === 0 ) {
+        for ( let row=4; row < read.length-4; row++ ) {
+            for ( let col=4; col < read[row].length-4; col++ ) {
+                if (read[row][col] === 0 ) {
                     continue;
                 }
 
@@ -833,19 +557,19 @@
                 ];
 
                 for ( let s=0; s<searchs.length; s+=2 ) {
-                    let group = reads[ searchs[s] ][ searchs[s+1] ];
+                    let group = read[ searchs[s] ][ searchs[s+1] ];
                     if (group) {
-                        reads[row][col] = group;
+                        read[row][col] = group;
                         break;
                     }
                 }
             }
         }
 
-        reads.reverse()
-        reads.transpose()
+        read.reverse()
+        read.transpose()
 
-        return reads;
+        return read;
     }
 
 
