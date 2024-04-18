@@ -327,8 +327,8 @@
     }
 
     queueMicrotask(async function (){
-
-        return drawAndRead("½")
+        return;
+        return drawAndRead("&")
 
         let max = 35;
         let codei = 0;
@@ -345,6 +345,128 @@
         draw()
 
     });
+
+
+    (function solveTriangles ( size ){
+        const fill = JSON.parse(sessionStorage.fill);
+        const line = JSON.parse(sessionStorage.stroke);
+
+        let container = document.createElement("div");
+        container.id = size;
+        container.className = "container";
+        document.body.append( container );
+
+        let filldraw = document.createElement("canvas");
+        let linedraw = document.createElement("canvas");
+
+        filldraw.width = filldraw.height =
+        linedraw.width = linedraw.height = size * devicePixelRatio * devicePixelRatio;
+
+        filldraw.style.width = filldraw.style.height =
+        linedraw.style.width = linedraw.style.height = CSS.px( size * devicePixelRatio );
+
+        container.append( filldraw )
+        container.append( linedraw )
+
+        let ctxfill = filldraw.getContext("2d");
+        let ctxline = linedraw.getContext("2d");
+
+        let colors = [
+            "red", "blue", "green", "aqua", "brown", "chartreuse", "gray", "black"
+        ]
+
+        fill.forEach(function ( group, i ){
+            ctxfill.fillStyle = colors[ i % (colors.length-1) ];
+            group.forEach(function ([x, y]){
+                ctxfill.fillRect( x * 2, y * 2, 2, 2 );
+            })
+        })    
+
+        line.forEach(function ( group, i ){
+            ctxline.fillStyle = colors[ i % (colors.length-1) ];
+            group.forEach(function ([x, y]){
+                ctxline.fillRect( x * 2, y * 2, 2, 2 );
+            })
+        })    
+
+        line.forEach(function ( group, i ){
+            group.sort(([x0, y0], [x1, y1]) => {
+                if ( y0 > y1 ) {
+                    return 1
+                } else if ( y0 === y1 ) {
+                    if ( x0 > x1 ) {
+                        return 3
+                    } else {
+                        return 2
+                    }
+                } else {
+                    return -1
+                }
+            })
+
+            Object.defineProperties( group, {
+                center : { value : (function (){
+                    return {
+                        x: this.reduce( (a,b) => (a[0] || a) + b[0] ) / this.length,
+                        y: this.reduce( (a,b) => (a[1] || a) + b[1] ) / this.length
+                    }
+                }).call( group )},
+
+                packet : { value : (function (){
+                    return {
+                        x0: this.reduce( (a,b) => Math.min( (a[0] || a), b[0] ) ),
+                        x1: this.reduce( (a,b) => Math.max( (a[0] || a), b[0] ) ),
+                        y0: this.reduce( (a,b) => Math.min( (a[1] || a), b[1] ) ),
+                        y1: this.reduce( (a,b) => Math.max( (a[1] || a), b[1] ) )
+                    }
+                }).call( group ) }
+            })
+
+            ctxline.fillStyle = colors[ i % (colors.length-1) ];
+            ctxline.beginPath()
+            ctxline.arc( group.center.x * 2, group.center.y * 2, 5, 0, 2 * Math.PI );
+            ctxline.closePath()
+            ctxline.fill();
+
+            console.warn(group)
+        })
+
+        let l = 0;
+        for (let i0=0; i0<line[l].length; i0++) {
+            let [x0,y0] = line[l][i0];
+
+            let current = { i: i0, x: x0, y:y0 }
+            let closest = line[l].map(([x1,y1], i1) => {
+                let dx = Math.pow( x1 - x0, 2 );
+                let dy = Math.pow( y1 - y0, 2 );
+
+                return {
+                    i: i1, x:x1, y:y1
+                    ,d: Math.sqrt( dx + dy ) || +Infinity
+                    ,di: Math.sqrt( Math.pow( i1 - i0, 2 ) ) || +Infinity
+                }
+            }).sort((a, b) => {
+                if ( a.d > b.d ) {
+                    return 1
+                } else if ( a.d === b.d ) {
+                    if ( a.di > b.di ) {
+                        return 3
+                    } else {
+                        return 2
+                    }
+                } else {
+                    return -1
+                }
+            }).at(0)
+
+            console.log( current )
+            console.log( closest )
+
+            break
+        }
+
+        console.log(...line[0].splice(0,2))
+    })( 256 )
 
 
     
