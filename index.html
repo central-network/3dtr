@@ -438,12 +438,12 @@
         })
 
 
-        let l = 0;
-        for (let i0=0; i0<line[l].length; i0++) {
-            let [x0,y0] = line[l][i0];
+        let group = line[0];
+        for (let i0=0; i0<group.length; i0++) {
+            let [x0,y0] = group[i0];
 
             let current = { i: i0, x: x0, y:y0 }
-            let closest = line[l].map(([x1,y1], i1) => {
+            let closest = group.map(([x1,y1], i1) => {
                 let dx = Math.pow( x1 - x0, 2 );
                 let dy = Math.pow( y1 - y0, 2 );
 
@@ -466,11 +466,107 @@
                 }
             }).at(0)
 
-            console.log( current )
-            console.log( closest )
+            let midpoint = {
+                x : Math.sqrt( Math.pow( current.x - closest.x, 2 )),
+                y : Math.sqrt( Math.pow( current.y - closest.y, 2 )),
+            }
+
+
+            let zone;
+            /* DIRECTION ZONES :
+            ___________________________
+            |            |            |
+            |            |            |
+            |     4      |      1     |
+            |            |            |
+            |____________|____________|
+            |            |            |
+            |            |            |
+            |     3      |      2     |
+            |            |            |
+            |____________|____________|
+            */
+            if ( group.center.x >= midpoint.x ) {
+                if ( group.center.y >= midpoint.y ) {
+                    zone = 3
+                } else {
+                    zone = 4
+                }
+            } else {
+                if ( group.center.y >= midpoint.y ) {
+                    zone = 2
+                } else {
+                    zone = 1
+                }
+            }
+
+
+            console.log( { current, closest, zone } )
 
             break
         }
+
+
+        for (let c=8; c<64; c++) {
+
+            let corners = []
+            let clength = c;
+    
+            line.forEach(function ( group ){
+    
+                for (let i=clength; i<group.length - clength-1; i++) {
+    
+                    let x0 =( group[i][0] )
+                    let y0 =( group[i][1] )
+    
+                    let x1 = 0, y1 = 0;
+                    let x2 = 0, y2 = 0;
+                    let ci = 0
+    
+                    while ( ci++ < clength ) {
+                        x1 += group[ i - ci ][0]
+                        y1 += group[ i - ci ][1]
+    
+                        x2 += group[ i + ci ][0]
+                        y2 += group[ i + ci ][1]
+                    }
+    
+                    x1 /= clength
+                    x2 /= clength
+    
+                    y1 /= clength
+                    y2 /= clength
+    
+                    let m1 = Math.abs(Math.atan( y1, x1 ) * 180) / Math.PI
+                    let m2 = Math.abs(Math.atan( y2, x2 ) * 180) / Math.PI
+    
+                    let d2 = (( Math.atan( ( x2 - x0 ) / (y2 - y0) ) * 180 ) / Math.PI)
+                    let d1 = (( Math.atan( ( x1 - x0 ) / (y1 - y0) ) * 180 ) / Math.PI)
+                    
+                    let d0 = Math.abs( ( m1 - m2 ) / ( 1 + ( m1 * m2 ) ))
+                    //let d0 = (d2 + d1)
+
+    
+                    if ( (d0) > 55 ) {
+                        
+                        ctxline.fillStyle = "orange"
+                        ctxline.beginPath()
+                        ctxline.arc( x0 * 2, y0 * 2, 6, 0, 2 * Math.PI );
+                        ctxline.closePath()
+                        ctxline.fill();
+                        
+                        ctxline.fillStyle = "black"
+                        ctxline.beginPath()
+                        ctxline.arc( x0 * 2, y0 * 2, 3, 0, 2 * Math.PI );
+                        ctxline.closePath()
+                        ctxline.fill();
+    
+                        console.log( {c, i, d0} )
+                    }
+                }
+            })
+        }
+
 
 
         line.forEach(function ( group, i ){
