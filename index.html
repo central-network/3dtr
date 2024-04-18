@@ -390,6 +390,7 @@
         })    
 
         line.forEach(function ( group, i ){
+
             group.sort(([x0, y0], [x1, y1]) => {
                 if ( y0 > y1 ) {
                     return 1
@@ -419,17 +420,23 @@
                         y0: this.reduce( (a,b) => Math.min( (a[1] || a), b[1] ) ),
                         y1: this.reduce( (a,b) => Math.max( (a[1] || a), b[1] ) )
                     }
-                }).call( group ) }
+                }).call( group ) },
+
+                children : { value : [] }
             })
-
-            ctxline.fillStyle = colors[ i % (colors.length-1) ];
-            ctxline.beginPath()
-            ctxline.arc( group.center.x * 2, group.center.y * 2, 5, 0, 2 * Math.PI );
-            ctxline.closePath()
-            ctxline.fill();
-
-            console.warn(group)
         })
+
+        line.forEach(function ( group, i ){
+            Object.defineProperty( group, "parent", { value:
+                line.find( (g, j) => (
+                    (g.packet.x0 < group.packet.x0) && 
+                    (g.packet.x1 > group.packet.x0) && 
+                    (g.packet.y0 < group.packet.y0) && 
+                    (g.packet.y1 > group.packet.y1) 
+                ))
+            }).parent?.children.push( group )
+        })
+
 
         let l = 0;
         for (let i0=0; i0<line[l].length; i0++) {
@@ -464,6 +471,18 @@
 
             break
         }
+
+
+        line.forEach(function ( group, i ){
+            
+            ctxline.fillStyle = colors[ i % (colors.length-1) ];
+            ctxline.beginPath()
+            ctxline.arc( group.center.x * 2, group.center.y * 2, 5, 0, 2 * Math.PI );
+            ctxline.closePath()
+            ctxline.fill();
+
+        })
+
 
         console.log(...line[0].splice(0,2))
     })( 256 )
