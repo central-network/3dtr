@@ -1299,16 +1299,13 @@
 
 </script>
 
-
+<canvas id="view"></canvas>
 <script src="3dtr.js">
     let red = 0.1, green = 0.3 , blue= 0.9, sign = 1, factor = 0.002;
 
     new Uint8Array( Math.trunc(performance.now()) );
 
-    const context = new CanvasRenderingContext2D( 256, 256 );
-
-    context.fillText("özgür", 10, 10)
-
+    const canvas = document.getElementById("view")
   
 
 </script>

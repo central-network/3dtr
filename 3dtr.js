@@ -1,7 +1,7 @@
 self.name = "window";
 
 (self.init = function() {
-  var ALLOCATION_BYTEOFFSET, BUFFER_TEST_START_LENGTH, BUFFER_TEST_STEP_DIVIDER, BYTES_PER_ELEMENT, BigInt64Array, BigUint64Array, CanvasRenderingContext2D, DUMP_WEAKMAP, EVENT_READY, Float32Array, Float64Array, HEADERS_BYTE_LENGTH, HEADERS_LENGTH, HEADERS_LENGTH_OFFSET, HINDEX_BEGIN, HINDEX_BYTELENGTH, HINDEX_BYTEOFFSET, HINDEX_END, HINDEX_ITERINDEX, HINDEX_ITERLENGTH, HINDEX_LENGTH, HINDEX_LOCKFREE, HINDEX_RESOLV_ID, HINDEX_WAITCOUNT, HTMLDocument, HTMLElement, INITIAL_BYTELENGTH, INIT_SCREEN, INNER_HEIGHT, INNER_WIDTH, ITERATION_PER_THREAD, Int16Array, Int32Array, Int8Array, MAX_PTR_COUNT, MAX_THREAD_COUNT, OffscreenCanvas, OnscreenCanvas, RATIO_ASPECT, RATIO_PIXEL, RESERVED_BYTELENGTH, TypedArray, Uint16Array, Uint32Array, Uint8Array, Uint8ClampedArray, WebGL2RenderingContext, addInt16, addInt32, addInt8, addUint16, addUint32, addUint8, andInt16, andInt32, andInt8, andUint16, andUint32, andUint8, bc, blobURL, bridge, bridgeHandler, bridgemessage, compareInt16, compareInt32, compareInt8, compareUint16, compareUint32, compareUint8, createBlobURL, createBuffers, createCanvas, createThreads, createWorker, cu8, dvw, error, exchangeInt16, exchangeInt32, exchangeInt8, exchangeUint16, exchangeUint32, exchangeUint8, f32, f64, getInt16, getInt32, getInt8, getUint16, getUint32, getUint8, i16, i32, i64, initMemory, isBridge, isThread, isWindow, isWorker, listenEvents, littleEnd, loadInt16, loadInt32, loadInt8, loadUint16, loadUint32, loadUint8, lock, log, malloc, now, number, objbuf, objects, orInt16, orInt32, orInt8, orUint16, orUint32, orUint8, p32, pnow, ptrbuf, randomUUID, regenerate, replies, request, resolvCall, resolvFind, resolvs, selfName, setInt16, setInt32, setInt8, setUint16, setUint32, setUint8, sharedHandler, si8, storeInt16, storeInt32, storeInt8, storeUint16, storeUint32, storeUint8, subInt16, subInt32, subInt8, subUint16, subUint32, subUint8, threadHandler, threadId, threadmessage, u16, u32, u64, ui8, unlock, warn, workers, xorInt16, xorInt32, xorInt8, xorUint16, xorUint32, xorUint8;
+  var ALLOCATION_BYTEOFFSET, BUFFER_TEST_START_LENGTH, BUFFER_TEST_STEP_DIVIDER, BYTES_PER_ELEMENT, BigInt64Array, BigUint64Array, CanvasRenderingContext2D, DUMP_WEAKMAP, EVENT_READY, Float32Array, Float64Array, HEADERS_BYTE_LENGTH, HEADERS_LENGTH, HEADERS_LENGTH_OFFSET, HINDEX_BEGIN, HINDEX_BYTELENGTH, HINDEX_BYTEOFFSET, HINDEX_END, HINDEX_ITERINDEX, HINDEX_ITERLENGTH, HINDEX_LENGTH, HINDEX_LOCKFREE, HINDEX_RESOLV_ID, HINDEX_WAITCOUNT, HTMLDocument, HTMLElement, INITIAL_BYTELENGTH, INIT_SCREEN, INNER_HEIGHT, INNER_WIDTH, ITERATION_PER_THREAD, Int16Array, Int32Array, Int8Array, MAX_PTR_COUNT, MAX_THREAD_COUNT, OffscreenCanvas, OnscreenCanvas, RATIO_ASPECT, RATIO_PIXEL, RESERVED_BYTELENGTH, TypedArray, Uint16Array, Uint32Array, Uint8Array, Uint8ClampedArray, WebGL2RenderingContext, addInt16, addInt32, addInt8, addUint16, addUint32, addUint8, andInt16, andInt32, andInt8, andUint16, andUint32, andUint8, bc, blobURL, bridge, bridgeHandler, bridgemessage, compareInt16, compareInt32, compareInt8, compareUint16, compareUint32, compareUint8, createBlobURL, createBuffers, createCanvas, createThreads, createWorker, cu8, document, dvw, error, exchangeInt16, exchangeInt32, exchangeInt8, exchangeUint16, exchangeUint32, exchangeUint8, f32, f64, getInt16, getInt32, getInt8, getUint16, getUint32, getUint8, i16, i32, i64, initMemory, isBridge, isThread, isWindow, isWorker, listenEvents, littleEnd, loadInt16, loadInt32, loadInt8, loadUint16, loadUint32, loadUint8, lock, log, malloc, now, number, objbuf, objects, orInt16, orInt32, orInt8, orUint16, orUint32, orUint8, p32, pnow, ptrbuf, randomUUID, ref1, regenerate, replies, request, resolvCall, resolvFind, resolvs, selfName, setInt16, setInt32, setInt8, setUint16, setUint32, setUint8, sharedHandler, si8, storeInt16, storeInt32, storeInt8, storeUint16, storeUint32, storeUint8, subInt16, subInt32, subInt8, subUint16, subUint32, subUint8, threadHandler, threadId, threadmessage, u16, u32, u64, ui8, unlock, warn, workers, xorInt16, xorInt32, xorInt8, xorUint16, xorUint32, xorUint8;
   log = function() {
     return console.log(name, ...arguments);
   };
@@ -55,7 +55,45 @@ self.name = "window";
   ];
   [blobURL, bridge, objbuf, ptrbuf, lock, unlock, malloc, littleEnd, request, objects, p32, dvw, si8, ui8, cu8, i32, u32, f32, f64, u64, i64, i16, u16, andUint32, orUint32, xorUint32, subUint32, addUint32, loadUint32, storeUint32, getUint32, setUint32, exchangeUint32, compareUint32, andUint16, orUint16, xorUint16, subUint16, addUint16, loadUint16, storeUint16, getUint16, setUint16, exchangeUint16, compareUint16, andUint8, orUint8, xorUint8, subUint8, addUint8, loadUint8, storeUint8, getUint8, setUint8, exchangeUint8, compareUint8, andInt32, orInt32, xorInt32, subInt32, addInt32, loadInt32, storeInt32, getInt32, setInt32, exchangeInt32, compareInt32, andInt16, orInt16, xorInt16, subInt16, addInt16, loadInt16, storeInt16, getInt16, setInt16, exchangeInt16, compareInt16, andInt8, orInt8, xorInt8, subInt8, addInt8, loadInt8, storeInt8, getInt8, setInt8, exchangeInt8, compareInt8] = [];
   [OnscreenCanvas, OffscreenCanvas, WebGL2RenderingContext, CanvasRenderingContext2D, Uint8Array, Int8Array, Uint8ClampedArray, Uint16Array, Int16Array, Uint32Array, Int32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array] = [];
-  [bc = new BroadcastChannel("3dtr"), selfName = self.name, isWindow = self.document != null, isWorker = typeof WorkerGlobalScope !== "undefined" && WorkerGlobalScope !== null, isBridge = /bridge/i.test(selfName), isThread = /thread/i.test(selfName), threadId = isThread && parseInt(selfName.match(/\d+/)), now = Date.now(), pnow = performance.now(), resolvs = new WeakMap(), replies = new Object(), objects = new Object(), workers = new self.Array(), littleEnd = new self.Uint8Array(self.Uint32Array.of(0x01).buffer)[0], TypedArray = Object.getPrototypeOf(self.Uint8Array)];
+  [
+    bc = new BroadcastChannel("3dtr"),
+    selfName = self.name,
+    isWindow = self.document != null,
+    isWorker = typeof WorkerGlobalScope !== "undefined" && WorkerGlobalScope !== null,
+    isBridge = /bridge/i.test(selfName),
+    isThread = /thread/i.test(selfName),
+    threadId = isThread && parseInt(selfName.match(/\d+/)),
+    now = Date.now(),
+    pnow = performance.now(),
+    resolvs = new WeakMap(),
+    replies = new Object(),
+    objects = new Object(),
+    workers = new self.Array(),
+    littleEnd = new self.Uint8Array(self.Uint32Array.of(0x01).buffer)[0],
+    TypedArray = Object.getPrototypeOf(self.Uint8Array),
+    document = (ref1 = self.document) != null ? ref1 : new Proxy({
+      getElementById: function(id) {
+        var ptri;
+        ptri = resolvCall();
+        if (isBridge) {
+          postMessage({
+            document: {
+              getElementById: id
+            }
+          });
+        }
+        return log(id,
+    ptri);
+      }
+    },
+    {
+      get: function(ref,
+    key,
+    pxy) {
+        return Reflect.get(...arguments);
+      }
+    })
+  ];
   resolvFind = function(id, retry = 0) {
     var i, ptri;
     i = HINDEX_RESOLV_ID + Atomics.load(p32, 1);
@@ -1629,6 +1667,8 @@ self.name = "window";
           }
         }
 
+        renderOn(element) {}
+
         fillText(text, x, y, maxWidth) {
           var ptri;
           ptri = resolvCall();
@@ -1636,7 +1676,7 @@ self.name = "window";
             resolvs.set(this, ptri);
             unlock(ptri);
             lock(ptri);
-            log("filled");
+            return this;
           }
           if (isThread) {
             lock(ptri);
@@ -1856,6 +1896,17 @@ self.name = "window";
       }
     };
     bridgeHandler = {
+      document: function(data) {
+        var args, key;
+        for (key in data) {
+          args = data[key];
+          break;
+        }
+        switch (document[key].constructor) {
+          case Function:
+            return console.log(document[key].apply(document, [args].flat()));
+        }
+      },
       render: function(data) {
         return this[data.ptri].transferFromImageBitmap(data.imageBitmap);
       },
@@ -1926,13 +1977,13 @@ self.name = "window";
       return workers[workers.length] = worker;
     };
     createThreads = function() {
-      var i, j, ref, results, thread;
+      var i, j, ref2, results, thread;
       bridge = createWorker("bridge", bridgemessage);
       bridge.postMessage({
         setup: {blobURL, objbuf, ptrbuf}
       });
       results = [];
-      for (i = j = 0, ref = MAX_THREAD_COUNT; (0 <= ref ? j < ref : j > ref); i = 0 <= ref ? ++j : --j) {
+      for (i = j = 0, ref2 = MAX_THREAD_COUNT; (0 <= ref2 ? j < ref2 : j > ref2); i = 0 <= ref2 ? ++j : --j) {
         thread = createWorker("thread" + i, threadmessage);
         results.push(thread.postMessage({
           setup: {blobURL, objbuf, ptrbuf}
@@ -1980,11 +2031,11 @@ self.name = "window";
   }
   if (isBridge) {
     addEventListener("message", function(e) {
-      var data, ptri, ref, req, results, uuid;
-      ref = e.data;
+      var data, ptri, ref2, req, results, uuid;
+      ref2 = e.data;
       results = [];
-      for (req in ref) {
-        data = ref[req];
+      for (req in ref2) {
+        data = ref2[req];
         switch (req) {
           case "onscreen":
             ptri = data.ptri;
@@ -2011,11 +2062,11 @@ self.name = "window";
   }
   if (isThread) {
     addEventListener("message", function(e) {
-      var data, ref, req, results, uuid;
-      ref = e.data;
+      var data, ref2, req, results, uuid;
+      ref2 = e.data;
       results = [];
-      for (req in ref) {
-        data = ref[req];
+      for (req in ref2) {
+        data = ref2[req];
         switch (req) {
           case "setup":
             uuid = randomUUID();

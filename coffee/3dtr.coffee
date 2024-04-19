@@ -93,7 +93,23 @@ do  self.init   = ->
         objects     = new Object()
         workers     = new self.Array()
         littleEnd   = new self.Uint8Array(self.Uint32Array.of(0x01).buffer)[0]
-        TypedArray  = Object.getPrototypeOf self.Uint8Array ]
+        TypedArray  = Object.getPrototypeOf self.Uint8Array
+
+        document    = self.document ? new Proxy {
+            getElementById : ( id ) ->
+                ptri = resolvCall()
+
+                if  isBridge
+                    postMessage document : {
+                        getElementById : id
+                    }
+
+                log id, ptri       
+
+        }, {
+            get : ( ref, key, pxy ) ->
+                Reflect.get( ...arguments )
+        } ]
 
 
     resolvFind  = ( id, retry = 0 ) ->
@@ -2001,21 +2017,23 @@ do  self.init   = ->
                         get     : -> loadUint8  @indexUint8(@INDEX_ISASYNC)
                         set     : -> storeUint8 @indexUint8(@INDEX_ISASYNC), arguments[0]            
 
-            constructor     : ( width, height ) ->
+            constructor         : ( width, height ) ->
                 super( 32 + width * height )
 
                 if  isThread then Object.defineProperties this,
                     canvas  : value : c = new self.OffscreenCanvas width, height
                     context : value : c . getContext( "2d" )
 
-            fillText    : ( text, x, y, maxWidth ) ->
+            renderOn            : ( element ) ->
+
+            fillText        :    ( text, x, y, maxWidth ) ->
                 ptri = resolvCall()
 
                 if  isBridge
                     resolvs.set this , ptri
                     unlock ptri
                     lock ptri
-                    log "filled"
+                    return this
                 
                 if  isThread
                     lock ptri
@@ -2025,7 +2043,6 @@ do  self.init   = ->
                     if  @isAsync or MAX_THREAD_COUNT is loadUint8 @indexUint8(0)
                         storeUint8 @indexUint8(0), 0
                         unlock ptri
-
 
         class OnscreenCanvas    extends Uint32Array
     
@@ -2108,7 +2125,6 @@ do  self.init   = ->
             getContext2d : ->
                 @context = new CanvasRenderingContext2D( this )
 
-                
 
         class OffscreenCanvas   extends self.OffscreenCanvas
 
@@ -2176,6 +2192,14 @@ do  self.init   = ->
                     bc.postMessage EVENT_READY
                 
         bridgeHandler   =
+
+            document    : ( data ) ->
+                break for key, args of data
+
+                switch document[ key ].constructor
+                    when Function
+
+                        console.log document[key].apply( document, [ args ].flat() )
 
             render      : ( data ) ->
                 this[ data.ptri ]
