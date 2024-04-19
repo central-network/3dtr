@@ -30,7 +30,7 @@ do  self.init   = ->
         HEADERS_LENGTH              = 16
         HEADERS_BYTE_LENGTH         = 4 * 16
         MAX_PTR_COUNT               = 1e5
-        MAX_THREAD_COUNT            = 1 # 4 + navigator?.hardwareConcurrency or 3
+        MAX_THREAD_COUNT            = 2 # 4 + navigator?.hardwareConcurrency or 3
         ITERATION_PER_THREAD        = 1000000
 
         INNER_WIDTH                 = innerWidth ? 640
@@ -70,7 +70,10 @@ do  self.init   = ->
     [
         OnscreenCanvas,
         OffscreenCanvas,
-
+        
+        WebGL2RenderingContext,
+        CanvasRenderingContext2D,
+        
         Uint8Array  , Int8Array   , Uint8ClampedArray,
         Uint16Array , Int16Array  , Uint32Array  , Int32Array,
         Float32Array, Float64Array, BigInt64Array, BigUint64Array ] = []
@@ -87,13 +90,10 @@ do  self.init   = ->
         pnow        = performance.now()
         resolvs     = new WeakMap()
         replies     = new Object()
-        objects    = new Object()
+        objects     = new Object()
         workers     = new self.Array()
         littleEnd   = new self.Uint8Array(self.Uint32Array.of(0x01).buffer)[0]
-        TypedArray  = Object.getPrototypeOf self.Uint8Array
-        GLContext   = WebGL2RenderingContext ? WebGLRenderingContext ]
-
-
+        TypedArray  = Object.getPrototypeOf self.Uint8Array ]
 
 
     resolvFind  = ( id, retry = 0 ) ->
@@ -1986,6 +1986,47 @@ do  self.init   = ->
                 # WeakMap -> {TypedArray} => ptri
                 resolvs.set this, ptri
 
+
+        class WebGL2RenderingContext
+            constructor : ( @canvas ) ->
+                console.log(this)
+
+        class CanvasRenderingContext2D extends Uint32Array
+
+            INDEX_ISASYNC       : 1 * 1     # Uint8
+            
+            Object.defineProperties this::,
+
+                isAsync         :
+                        get     : -> loadUint8  @indexUint8(@INDEX_ISASYNC)
+                        set     : -> storeUint8 @indexUint8(@INDEX_ISASYNC), arguments[0]            
+
+            constructor     : ( width, height ) ->
+                super( 32 + width * height )
+
+                if  isThread then Object.defineProperties this,
+                    canvas  : value : c = new self.OffscreenCanvas width, height
+                    context : value : c . getContext( "2d" )
+
+            fillText    : ( text, x, y, maxWidth ) ->
+                ptri = resolvCall()
+
+                if  isBridge
+                    resolvs.set this , ptri
+                    unlock ptri
+                    lock ptri
+                    log "filled"
+                
+                if  isThread
+                    lock ptri
+                    @context.fillText( text, x, y, maxWidth )
+                    addUint8 @indexUint8(0), 1
+
+                    if  @isAsync or MAX_THREAD_COUNT is loadUint8 @indexUint8(0)
+                        storeUint8 @indexUint8(0), 0
+                        unlock ptri
+
+
         class OnscreenCanvas    extends Uint32Array
     
             @byteLength         : 4 * 2
@@ -2006,7 +2047,7 @@ do  self.init   = ->
                         get     : -> loadUint8  @indexUint8(@INDEX_HASCONTEXT)
                         set     : ->
                             if  storeUint8 @indexUint8(@INDEX_HASCONTEXT), arguments[0]
-                                @render() if @isRendering 
+                                @render() if @isRendering
 
                 frameCount      :
                         get     : -> loadUint32 @indexUint32(@INDEX_FRAMECOUNT)
@@ -2037,9 +2078,8 @@ do  self.init   = ->
 
             constructor : ->
                 super OnscreenCanvas.byteLength
-                    .init()
 
-            init        : ->
+            getContext : ( type ) ->
                 ptri = resolvCall()
 
                 if  isThread
@@ -2047,45 +2087,27 @@ do  self.init   = ->
                     
                 else
                     replies[ ptri ] = ( canvas ) =>
-                        @gl = canvas.getContext "webgl2", {
-                            powerPreference: "high-performance",
-                            ### preserveDrawingBuffer: false,
-                                I know this has been answered elsewhere but I can't find it so ....
-
-                                preserveDrawingBuffer: false
-                                means WebGL can swap buffers instead of copy buffers.
-
-                                WebGL canvases have 2 buffers. The one you're drawing to and the one 
-                                being displayed. When it comes time to draw the webpage WebGL has 2 options
-
-                                Copy the drawing buffer to the display buffer.
-
-                                This operation is slower obviously as copying thousands or millions pixels 
-                                is not a free operation
-
-                                Swap the two buffers.
-
-                                This operation is effectively instant as nothing really needs to happen 
-                                except to swap the contents of 2 variables.
-
-                                Whether WebGL swaps or copies is up to the browser and various other 
-                                settings but if preserveDrawingBuffer is false WebGL can swap, if it's true it can't.
-
-                                If you'd like to see a perf difference I'd suggested trying your app 
-                                on mobile phone. Make sure antialiasing is off too since antialiasing 
-                                requires a resolve step which is effectively copy operation.
-
-                                edited Jan 2, 2015 at 21:56
-                                answered Jan 2, 2015 at 18:47
-                                gman ###
-                            
-                        }
+                        Object.defineProperty this, "screen", value :
+                            canvas.getContext type, {
+                                powerPreference: "high-performance",
+                            }
                         @hasContext = 1
                         unlock ptri
                         
                     postMessage onscreen : { ptri }
 
-                resolvs.set this , ptri ; this
+                resolvs.set this , ptri
+                
+                return switch type
+                    when "2d" then @getContext2d()
+                    when "webgl2" then @getContextWebGL2()
+
+            getContextWebGL2 : ->
+                @gl = new WebGL2RenderingContext( this )
+
+            getContext2d : ->
+                @context = new CanvasRenderingContext2D( this )
+
                 
 
         class OffscreenCanvas   extends self.OffscreenCanvas

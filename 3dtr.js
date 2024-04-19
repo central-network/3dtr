@@ -1,7 +1,7 @@
 self.name = "window";
 
 (self.init = function() {
-  var ALLOCATION_BYTEOFFSET, BUFFER_TEST_START_LENGTH, BUFFER_TEST_STEP_DIVIDER, BYTES_PER_ELEMENT, BigInt64Array, BigUint64Array, DUMP_WEAKMAP, EVENT_READY, Float32Array, Float64Array, GLContext, HEADERS_BYTE_LENGTH, HEADERS_LENGTH, HEADERS_LENGTH_OFFSET, HINDEX_BEGIN, HINDEX_BYTELENGTH, HINDEX_BYTEOFFSET, HINDEX_END, HINDEX_ITERINDEX, HINDEX_ITERLENGTH, HINDEX_LENGTH, HINDEX_LOCKFREE, HINDEX_RESOLV_ID, HINDEX_WAITCOUNT, HTMLDocument, HTMLElement, INITIAL_BYTELENGTH, INIT_SCREEN, INNER_HEIGHT, INNER_WIDTH, ITERATION_PER_THREAD, Int16Array, Int32Array, Int8Array, MAX_PTR_COUNT, MAX_THREAD_COUNT, OffscreenCanvas, OnscreenCanvas, RATIO_ASPECT, RATIO_PIXEL, RESERVED_BYTELENGTH, TypedArray, Uint16Array, Uint32Array, Uint8Array, Uint8ClampedArray, addInt16, addInt32, addInt8, addUint16, addUint32, addUint8, andInt16, andInt32, andInt8, andUint16, andUint32, andUint8, bc, blobURL, bridge, bridgeHandler, bridgemessage, compareInt16, compareInt32, compareInt8, compareUint16, compareUint32, compareUint8, createBlobURL, createBuffers, createCanvas, createThreads, createWorker, cu8, dvw, error, exchangeInt16, exchangeInt32, exchangeInt8, exchangeUint16, exchangeUint32, exchangeUint8, f32, f64, getInt16, getInt32, getInt8, getUint16, getUint32, getUint8, i16, i32, i64, initMemory, isBridge, isThread, isWindow, isWorker, listenEvents, littleEnd, loadInt16, loadInt32, loadInt8, loadUint16, loadUint32, loadUint8, lock, log, malloc, now, number, objbuf, objects, orInt16, orInt32, orInt8, orUint16, orUint32, orUint8, p32, pnow, ptrbuf, randomUUID, regenerate, replies, request, resolvCall, resolvFind, resolvs, selfName, setInt16, setInt32, setInt8, setUint16, setUint32, setUint8, sharedHandler, si8, storeInt16, storeInt32, storeInt8, storeUint16, storeUint32, storeUint8, subInt16, subInt32, subInt8, subUint16, subUint32, subUint8, threadHandler, threadId, threadmessage, u16, u32, u64, ui8, unlock, warn, workers, xorInt16, xorInt32, xorInt8, xorUint16, xorUint32, xorUint8;
+  var ALLOCATION_BYTEOFFSET, BUFFER_TEST_START_LENGTH, BUFFER_TEST_STEP_DIVIDER, BYTES_PER_ELEMENT, BigInt64Array, BigUint64Array, CanvasRenderingContext2D, DUMP_WEAKMAP, EVENT_READY, Float32Array, Float64Array, HEADERS_BYTE_LENGTH, HEADERS_LENGTH, HEADERS_LENGTH_OFFSET, HINDEX_BEGIN, HINDEX_BYTELENGTH, HINDEX_BYTEOFFSET, HINDEX_END, HINDEX_ITERINDEX, HINDEX_ITERLENGTH, HINDEX_LENGTH, HINDEX_LOCKFREE, HINDEX_RESOLV_ID, HINDEX_WAITCOUNT, HTMLDocument, HTMLElement, INITIAL_BYTELENGTH, INIT_SCREEN, INNER_HEIGHT, INNER_WIDTH, ITERATION_PER_THREAD, Int16Array, Int32Array, Int8Array, MAX_PTR_COUNT, MAX_THREAD_COUNT, OffscreenCanvas, OnscreenCanvas, RATIO_ASPECT, RATIO_PIXEL, RESERVED_BYTELENGTH, TypedArray, Uint16Array, Uint32Array, Uint8Array, Uint8ClampedArray, WebGL2RenderingContext, addInt16, addInt32, addInt8, addUint16, addUint32, addUint8, andInt16, andInt32, andInt8, andUint16, andUint32, andUint8, bc, blobURL, bridge, bridgeHandler, bridgemessage, compareInt16, compareInt32, compareInt8, compareUint16, compareUint32, compareUint8, createBlobURL, createBuffers, createCanvas, createThreads, createWorker, cu8, dvw, error, exchangeInt16, exchangeInt32, exchangeInt8, exchangeUint16, exchangeUint32, exchangeUint8, f32, f64, getInt16, getInt32, getInt8, getUint16, getUint32, getUint8, i16, i32, i64, initMemory, isBridge, isThread, isWindow, isWorker, listenEvents, littleEnd, loadInt16, loadInt32, loadInt8, loadUint16, loadUint32, loadUint8, lock, log, malloc, now, number, objbuf, objects, orInt16, orInt32, orInt8, orUint16, orUint32, orUint8, p32, pnow, ptrbuf, randomUUID, regenerate, replies, request, resolvCall, resolvFind, resolvs, selfName, setInt16, setInt32, setInt8, setUint16, setUint32, setUint8, sharedHandler, si8, storeInt16, storeInt32, storeInt8, storeUint16, storeUint32, storeUint8, subInt16, subInt32, subInt8, subUint16, subUint32, subUint8, threadHandler, threadId, threadmessage, u16, u32, u64, ui8, unlock, warn, workers, xorInt16, xorInt32, xorInt8, xorUint16, xorUint32, xorUint8;
   log = function() {
     return console.log(name, ...arguments);
   };
@@ -38,7 +38,7 @@ self.name = "window";
     HEADERS_LENGTH = 16,
     HEADERS_BYTE_LENGTH = 4 * 16,
     MAX_PTR_COUNT = 1e5,
-    MAX_THREAD_COUNT = 1, // 4 + navigator?.hardwareConcurrency or 3
+    MAX_THREAD_COUNT = 2, // 4 + navigator?.hardwareConcurrency or 3
     ITERATION_PER_THREAD = 1000000,
     INNER_WIDTH = typeof innerWidth !== "undefined" && innerWidth !== null ? innerWidth : 640,
     INNER_HEIGHT = typeof innerHeight !== "undefined" && innerHeight !== null ? innerHeight : 480,
@@ -54,8 +54,8 @@ self.name = "window";
     })()
   ];
   [blobURL, bridge, objbuf, ptrbuf, lock, unlock, malloc, littleEnd, request, objects, p32, dvw, si8, ui8, cu8, i32, u32, f32, f64, u64, i64, i16, u16, andUint32, orUint32, xorUint32, subUint32, addUint32, loadUint32, storeUint32, getUint32, setUint32, exchangeUint32, compareUint32, andUint16, orUint16, xorUint16, subUint16, addUint16, loadUint16, storeUint16, getUint16, setUint16, exchangeUint16, compareUint16, andUint8, orUint8, xorUint8, subUint8, addUint8, loadUint8, storeUint8, getUint8, setUint8, exchangeUint8, compareUint8, andInt32, orInt32, xorInt32, subInt32, addInt32, loadInt32, storeInt32, getInt32, setInt32, exchangeInt32, compareInt32, andInt16, orInt16, xorInt16, subInt16, addInt16, loadInt16, storeInt16, getInt16, setInt16, exchangeInt16, compareInt16, andInt8, orInt8, xorInt8, subInt8, addInt8, loadInt8, storeInt8, getInt8, setInt8, exchangeInt8, compareInt8] = [];
-  [OnscreenCanvas, OffscreenCanvas, Uint8Array, Int8Array, Uint8ClampedArray, Uint16Array, Int16Array, Uint32Array, Int32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array] = [];
-  [bc = new BroadcastChannel("3dtr"), selfName = self.name, isWindow = self.document != null, isWorker = typeof WorkerGlobalScope !== "undefined" && WorkerGlobalScope !== null, isBridge = /bridge/i.test(selfName), isThread = /thread/i.test(selfName), threadId = isThread && parseInt(selfName.match(/\d+/)), now = Date.now(), pnow = performance.now(), resolvs = new WeakMap(), replies = new Object(), objects = new Object(), workers = new self.Array(), littleEnd = new self.Uint8Array(self.Uint32Array.of(0x01).buffer)[0], TypedArray = Object.getPrototypeOf(self.Uint8Array), GLContext = typeof WebGL2RenderingContext !== "undefined" && WebGL2RenderingContext !== null ? WebGL2RenderingContext : WebGLRenderingContext];
+  [OnscreenCanvas, OffscreenCanvas, WebGL2RenderingContext, CanvasRenderingContext2D, Uint8Array, Int8Array, Uint8ClampedArray, Uint16Array, Int16Array, Uint32Array, Int32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array] = [];
+  [bc = new BroadcastChannel("3dtr"), selfName = self.name, isWindow = self.document != null, isWorker = typeof WorkerGlobalScope !== "undefined" && WorkerGlobalScope !== null, isBridge = /bridge/i.test(selfName), isThread = /thread/i.test(selfName), threadId = isThread && parseInt(selfName.match(/\d+/)), now = Date.now(), pnow = performance.now(), resolvs = new WeakMap(), replies = new Object(), objects = new Object(), workers = new self.Array(), littleEnd = new self.Uint8Array(self.Uint32Array.of(0x01).buffer)[0], TypedArray = Object.getPrototypeOf(self.Uint8Array)];
   resolvFind = function(id, retry = 0) {
     var i, ptri;
     i = HINDEX_RESOLV_ID + Atomics.load(p32, 1);
@@ -1605,6 +1605,68 @@ self.name = "window";
       }
 
     };
+    WebGL2RenderingContext = class WebGL2RenderingContext {
+      constructor(canvas1) {
+        this.canvas = canvas1;
+        console.log(this);
+      }
+
+    };
+    CanvasRenderingContext2D = (function() {
+      class CanvasRenderingContext2D extends Uint32Array {
+        constructor(width, height) {
+          var c;
+          super(32 + width * height);
+          if (isThread) {
+            Object.defineProperties(this, {
+              canvas: {
+                value: c = new self.OffscreenCanvas(width, height)
+              },
+              context: {
+                value: c.getContext("2d")
+              }
+            });
+          }
+        }
+
+        fillText(text, x, y, maxWidth) {
+          var ptri;
+          ptri = resolvCall();
+          if (isBridge) {
+            resolvs.set(this, ptri);
+            unlock(ptri);
+            lock(ptri);
+            log("filled");
+          }
+          if (isThread) {
+            lock(ptri);
+            this.context.fillText(text, x, y, maxWidth);
+            addUint8(this.indexUint8(0), 1);
+            if (this.isAsync || MAX_THREAD_COUNT === loadUint8(this.indexUint8(0))) {
+              storeUint8(this.indexUint8(0), 0);
+              return unlock(ptri);
+            }
+          }
+        }
+
+      };
+
+      CanvasRenderingContext2D.prototype.INDEX_ISASYNC = 1 * 1; // Uint8
+
+      Object.defineProperties(CanvasRenderingContext2D.prototype, {
+        isAsync: {
+          get: function() {
+            return loadUint8(this.indexUint8(this.INDEX_ISASYNC));
+          },
+          set: function() {
+            return storeUint8(this.indexUint8(this.INDEX_ISASYNC), arguments[0]);
+          }
+        }
+      });
+
+      return CanvasRenderingContext2D;
+
+    }).call(this);
     OnscreenCanvas = (function() {
       class OnscreenCanvas extends Uint32Array {
         addFrame() {
@@ -1638,48 +1700,21 @@ self.name = "window";
         }
 
         constructor() {
-          super(OnscreenCanvas.byteLength).init();
+          super(OnscreenCanvas.byteLength);
         }
 
-        init() {
+        getContext(type) {
           var ptri;
           ptri = resolvCall();
           if (isThread) {
             lock(ptri); // for bridge
           } else {
             replies[ptri] = (canvas) => {
-              this.gl = canvas.getContext("webgl2", {
-                powerPreference: "high-performance"
+              Object.defineProperty(this, "screen", {
+                value: canvas.getContext(type, {
+                  powerPreference: "high-performance"
+                })
               });
-              /* preserveDrawingBuffer: false,
-              I know this has been answered elsewhere but I can't find it so ....
-
-              preserveDrawingBuffer: false
-              means WebGL can swap buffers instead of copy buffers.
-
-              WebGL canvases have 2 buffers. The one you're drawing to and the one 
-              being displayed. When it comes time to draw the webpage WebGL has 2 options
-
-              Copy the drawing buffer to the display buffer.
-
-              This operation is slower obviously as copying thousands or millions pixels 
-              is not a free operation
-
-              Swap the two buffers.
-
-              This operation is effectively instant as nothing really needs to happen 
-              except to swap the contents of 2 variables.
-
-              Whether WebGL swaps or copies is up to the browser and various other 
-              settings but if preserveDrawingBuffer is false WebGL can swap, if it's true it can't.
-
-              If you'd like to see a perf difference I'd suggested trying your app 
-              on mobile phone. Make sure antialiasing is off too since antialiasing 
-              requires a resolve step which is effectively copy operation.
-
-              edited Jan 2, 2015 at 21:56
-              answered Jan 2, 2015 at 18:47
-              gman */
               this.hasContext = 1;
               return unlock(ptri);
             };
@@ -1688,7 +1723,20 @@ self.name = "window";
             });
           }
           resolvs.set(this, ptri);
-          return this;
+          switch (type) {
+            case "2d":
+              return this.getContext2d();
+            case "webgl2":
+              return this.getContextWebGL2();
+          }
+        }
+
+        getContextWebGL2() {
+          return this.gl = new WebGL2RenderingContext(this);
+        }
+
+        getContext2d() {
+          return this.context = new CanvasRenderingContext2D(this);
         }
 
       };
